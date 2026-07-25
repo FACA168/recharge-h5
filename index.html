@@ -680,6 +680,26 @@
                 ✅ 提交订单
             </button>
 
+            <!-- 充值中状态（默认隐藏） -->
+            <div id="submittingState" style="display:none;text-align:center;padding:20px 0;">
+                <div style="font-size:40px;margin-bottom:12px;">⏳</div>
+                <p style="font-size:15px;color:#334155;font-weight:600;">充值中…</p>
+                <p style="font-size:13px;color:#94a3b8;margin-top:4px;">请停留当前页面，正在处理</p>
+            </div>
+
+            <!-- 提交失败状态（默认隐藏） -->
+            <div id="failState" style="display:none;text-align:center;padding:20px 0;">
+                <div style="font-size:48px;margin-bottom:10px;">❌</div>
+                <p style="font-size:17px;color:#dc2626;font-weight:700;margin-bottom:6px;">提交失败</p>
+                <p style="font-size:13px;color:#64748b;margin-bottom:16px;" id="failReason">请联系在线客服</p>
+                <button class="btn-secondary" onclick="contactKefu()" style="margin-bottom:8px;">
+                    💬 联系在线客服
+                </button>
+                <button class="btn-secondary" style="background:#e2e8f0;color:#64748b;" onclick="resetSubmitBtn()">
+                    🔄 重新提交
+                </button>
+            </div>
+
             <p class="status-text" id="statusText3">
                 <span class="status-dot"></span> 请上传付款截图后提交
             </p>
@@ -692,23 +712,55 @@
 
     <!-- ==================== 第四步：订单结果 ==================== -->
     <section class="page-section" id="step4">
-        <div class="card result-card">
-            <div class="result-icon">✅</div>
-            <h2 class="result-title">订单提交成功！</h2>
-            <p class="result-desc">您的订单已提交，客服将在短时间内审核处理。</p>
-            <p class="result-desc">请耐心等待，审核通过后将自动到账。</p>
-            <p class="result-order-id" id="resultOrderId">订单编号：-</p>
+
+        <!-- 状态A：提交成功 + 充值中 + 倒计时（默认显示） -->
+        <div id="resultSuccessState">
+            <div class="card result-card">
+                <div class="result-icon">✅</div>
+                <h2 class="result-title">订单提交成功！</h2>
+                <p class="result-desc">正在充值中…请耐心等待。</p>
+
+                <!-- 倒计时读秒 -->
+                <div style="margin:16px 0;">
+                    <div style="
+                        width: 100%; height: 8px; background: #e2e8f0;
+                        border-radius: 4px; overflow: hidden;
+                    ">
+                        <div id="countdownBar" style="
+                            width: 100%; height: 100%;
+                            background: linear-gradient(90deg, #22c55e, #16a34a);
+                            border-radius: 4px;
+                            transition: width 1s linear;
+                        "></div>
+                    </div>
+                    <p style="text-align:center;font-size:28px;font-weight:800;color:#16a34a;margin-top:8px;">
+                        <span id="countdownNum">5</span><span style="font-size:14px;color:#94a3b8;"> 秒</span>
+                    </p>
+                </div>
+
+                <p class="result-order-id" id="resultOrderId">订单编号：-</p>
+            </div>
         </div>
 
-        <div class="card" style="text-align:center;">
-            <p style="font-size:14px;color:#64748b;margin-bottom:14px;">如有疑问，请联系客服</p>
-            <button class="btn-secondary" onclick="contactKefu()">
-                💬 联系客服
-            </button>
-            <button class="btn-primary" style="margin-top:10px;background:linear-gradient(135deg,#3b82f6,#2563eb);" onclick="resetAll()">
-                🏠 返回首页
-            </button>
+        <!-- 状态B：充值失败 + 联系客服（倒计时结束后显示） -->
+        <div id="resultFailState" style="display:none;">
+            <div class="card result-card">
+                <div class="result-icon" style="color:#dc2626;">❌</div>
+                <h2 class="result-title" style="color:#dc2626;">充值失败！</h2>
+                <p class="result-desc" style="color:#ef4444;">请联系在线客服处理</p>
+                <p class="result-order-id" id="resultOrderIdFail">订单编号：-</p>
+            </div>
+
+            <div class="card" style="text-align:center;">
+                <button class="btn-secondary" onclick="contactKefu()" style="margin-bottom:10px;">
+                    💬 联系在线客服
+                </button>
+                <button class="btn-primary" style="background:linear-gradient(135deg,#3b82f6,#2563eb);" onclick="resetAll()">
+                    🏠 返回首页
+                </button>
+            </div>
         </div>
+
     </section>
 
 </main>
@@ -962,30 +1014,35 @@ function handleUpload(event) {
 async function submitOrder() {
     const submitBtn = document.getElementById('submitBtn');
     const statusText = document.getElementById('statusText3');
-
-    if (!sbClient) {
-        showToast('⚠️ 尚未配置 Supabase，无法提交订单');
-        return;
-    }
+    const submittingState = document.getElementById('submittingState');
+    const failState = document.getElementById('failState');
 
     if (!uploadedFile) {
         showToast('⚠️ 请先上传付款截图');
         return;
     }
 
-    submitBtn.disabled = true;
-    submitBtn.innerHTML = '<span class="loading-spinner"></span> 提交中...';
-    statusText.innerHTML = '<span class="status-dot"></span> 正在上传凭证...';
+    // ---- 隐藏按钮和状态，显示"充值中" ----
+    submitBtn.style.display = 'none';
+    statusText.style.display = 'none';
+    submittingState.style.display = 'block';
+    failState.style.display = 'none';
 
     try {
+        // 如果 Supabase 未配置，模拟 5 秒后显示失败（给用户友好提示）
+        if (!sbClient) {
+            await new Promise(r => setTimeout(r, 5000));
+            showFailState('尚未配置数据库，请联系在线客服');
+            return;
+        }
+
         const orderId = generateOrderId();
 
         // ---- 1. 上传截图到 Supabase Storage ----
-        statusText.innerHTML = '<span class="status-dot"></span> 上传付款截图...';
         const fileExt = uploadedFile.name.split('.').pop() || 'jpg';
         const filePath = `order_${orderId}_${Date.now()}.${fileExt}`;
 
-        const { data: upData, error: upErr } = await sbClient.storage
+        const { error: upErr } = await sbClient.storage
             .from('screenshots')
             .upload(filePath, uploadedFile, { upsert: false });
 
@@ -998,7 +1055,6 @@ async function submitOrder() {
         const screenshotUrl = urlData.publicUrl;
 
         // ---- 2. 写入 orders 表 ----
-        statusText.innerHTML = '<span class="status-dot"></span> 创建订单...';
         const { error: insErr } = await sbClient.from('orders').insert({
             order_id: orderId,
             phone: currentPhone,
@@ -1012,16 +1068,64 @@ async function submitOrder() {
         });
         if (insErr) throw insErr;
 
+        // ---- 成功：跳转到结果页，启动倒计时 ----
         document.getElementById('resultOrderId').textContent = '订单编号：' + orderId;
+        document.getElementById('resultOrderIdFail').textContent = '订单编号：' + orderId;
+
+        // 显示成功状态，隐藏失败状态
+        document.getElementById('resultSuccessState').style.display = 'block';
+        document.getElementById('resultFailState').style.display = 'none';
+
+        // 重置倒计时 UI
+        const bar = document.getElementById('countdownBar');
+        const numEl = document.getElementById('countdownNum');
+        bar.style.width = '100%';
+        numEl.textContent = '5';
+
         goStep(4);
-        showToast('🎉 订单提交成功！');
+
+        // 启动 5 秒倒计时
+        let seconds = 5;
+        const timer = setInterval(() => {
+            seconds--;
+            numEl.textContent = seconds;
+            bar.style.width = (seconds / 5 * 100) + '%';
+
+            if (seconds <= 0) {
+                clearInterval(timer);
+                // 倒计时结束 → 切换到失败状态
+                document.getElementById('resultSuccessState').style.display = 'none';
+                document.getElementById('resultFailState').style.display = 'block';
+            }
+        }, 1000);
+
     } catch(e) {
         console.error('提交失败：', e);
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = '✅ 提交订单';
-        statusText.innerHTML = '<span class="status-dot"></span> 提交失败，请重试';
-        showToast('❌ 提交失败：' + (e.message || '网络错误'));
+        // 失败：显示失败状态 + 联系客服
+        let reason = e.message || '网络错误，请重试';
+        if (reason.includes('Invalid') || reason.includes('JWS')) {
+            reason = '系统配置异常，请联系在线客服';
+        }
+        showFailState(reason);
     }
+}
+
+// ---- 显示失败状态 ----
+function showFailState(reason) {
+    document.getElementById('submittingState').style.display = 'none';
+    document.getElementById('failState').style.display = 'block';
+    document.getElementById('failReason').textContent = reason;
+}
+
+// ---- 重置提交按钮（重新提交） ----
+function resetSubmitBtn() {
+    document.getElementById('submitBtn').style.display = '';
+    document.getElementById('submitBtn').disabled = false;
+    document.getElementById('submitBtn').innerHTML = '✅ 提交订单';
+    document.getElementById('statusText3').style.display = '';
+    document.getElementById('statusText3').innerHTML = '<span class="status-dot"></span> 请重新提交';
+    document.getElementById('submittingState').style.display = 'none';
+    document.getElementById('failState').style.display = 'none';
 }
 
 // ============================================================
@@ -1068,8 +1172,16 @@ function resetAll() {
     document.getElementById('fileInput').value = '';
     document.getElementById('submitBtn').disabled = false;
     document.getElementById('submitBtn').innerHTML = '✅ 提交订单';
+    document.getElementById('submitBtn').style.display = '';
     document.getElementById('statusText3').innerHTML = '<span class="status-dot"></span> 请上传付款截图后提交';
     document.getElementById('statusText3').classList.remove('status-success');
+    document.getElementById('statusText3').style.display = '';
+    document.getElementById('submittingState').style.display = 'none';
+    document.getElementById('failState').style.display = 'none';
+
+    // 重置第4步状态
+    document.getElementById('resultSuccessState').style.display = 'block';
+    document.getElementById('resultFailState').style.display = 'none';
 
     goStep(1);
 }
