@@ -1,0 +1,1129 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>充值中心</title>
+    <!-- 引入 Supabase JS SDK（通过 CDN，无需构建） -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        /* ========== 全局重置 ========== */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            background-color: #f0f4f8;
+            color: #333;
+            min-height: 100vh;
+        }
+
+        /* ========== 顶部导航栏 ========== */
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 18px;
+            background: linear-gradient(135deg, #4a9eff 0%, #3b82f6 100%);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 12px rgba(59, 130, 246, 0.25);
+        }
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .header-icon {
+            width: 32px;
+            height: 32px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+        .header-title {
+            color: #fff;
+            font-size: 19px;
+            font-weight: 600;
+            letter-spacing: 1px;
+        }
+        .home-btn {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 7px 14px;
+            background: rgba(255,255,255,0.22);
+            border: none;
+            border-radius: 20px;
+            color: #fff;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .home-btn:active { transform: scale(0.96); }
+
+        /* ========== 主内容区 ========== */
+        .main {
+            padding: 16px;
+            max-width: 480px;
+            margin: 0 auto;
+            padding-bottom: 80px;
+        }
+
+        /* ========== 页面步骤容器 ========== */
+        .page-section {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+        .page-section.active {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ========== 品牌标语横幅 ========== */
+        .banner {
+            text-align: center;
+            padding: 28px 16px;
+            margin-bottom: 14px;
+            background: linear-gradient(180deg, rgba(74,158,255,0.06) 0%, transparent 100%);
+            border-radius: 12px;
+        }
+        .banner-text {
+            font-size: 17px;
+            font-weight: 700;
+            color: #2563eb;
+            letter-spacing: 1px;
+        }
+
+        /* ========== 公告提示条 ========== */
+        .notice-bar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 13px 16px;
+            background: #fff;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 10px;
+            margin-bottom: 18px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+        }
+        .notice-text {
+            font-size: 14px;
+            color: #475569;
+            line-height: 1.5;
+        }
+
+        /* ========== 卡片通用 ========== */
+        .card {
+            background: #fff;
+            border-radius: 14px;
+            padding: 24px 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            margin-bottom: 16px;
+        }
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+        .card-dot {
+            width: 8px;
+            height: 8px;
+            background: #3b82f6;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .card-title {
+            font-size: 17px;
+            font-weight: 700;
+            color: #1e40af;
+        }
+
+        /* ========== 输入框 ========== */
+        .input-group { margin-bottom: 16px; }
+        .input-label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #334155;
+            margin-bottom: 8px;
+        }
+        .form-input {
+            width: 100%;
+            padding: 13px 15px;
+            border: 1.5px solid #cbd5e1;
+            border-radius: 10px;
+            font-size: 15px;
+            color: #333;
+            outline: none;
+            transition: all 0.25s ease;
+            background: #f8fafc;
+        }
+        .form-input::placeholder { color: #94a3b8; }
+        .form-input:focus {
+            border-color: #3b82f6;
+            background: #fff;
+            box-shadow: 0 0 0 3px rgba(59,130,246,0.12);
+        }
+
+        /* ========== 按钮 ========== */
+        .btn-primary {
+            width: 100%;
+            padding: 15px 20px;
+            background: linear-gradient(135deg, #f5a623 0%, #e8941c 100%);
+            border: none;
+            border-radius: 28px;
+            color: #fff;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            letter-spacing: 1px;
+            box-shadow: 0 4px 14px rgba(245,166,35,0.35);
+            margin-bottom: 12px;
+        }
+        .btn-primary:active { transform: scale(0.98); }
+        .btn-primary:disabled { opacity: 0.55; cursor: not-allowed; transform: none; box-shadow: none; }
+
+        .btn-secondary {
+            width: 100%;
+            padding: 14px 20px;
+            background: linear-gradient(135deg, #93b8f5 0%, #7ba8e8 100%);
+            border: none;
+            border-radius: 28px;
+            color: #fff;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+        .btn-secondary:active { transform: scale(0.98); }
+        .btn-secondary:disabled { opacity: 0.45; cursor: not-allowed; }
+
+        /* ========== 状态文字 ========== */
+        .status-text {
+            text-align: center;
+            font-size: 13px;
+            color: #94a3b8;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+        .status-dot {
+            display: inline-block;
+            width: 7px;
+            height: 7px;
+            background: #fbbf24;
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.2); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+        .status-success { color: #16a34a !important; }
+        .status-success .status-dot { background: #22c55e; animation: none; }
+
+        /* ========== 代金券信息 ========== */
+        .coupon-info {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border: 1.5px dashed #f59e0b;
+            border-radius: 12px;
+            padding: 18px;
+            margin-bottom: 16px;
+            text-align: center;
+        }
+        .coupon-label {
+            font-size: 13px;
+            color: #92400e;
+            margin-bottom: 6px;
+        }
+        .coupon-code {
+            font-size: 22px;
+            font-weight: 800;
+            color: #b45309;
+            letter-spacing: 3px;
+            font-family: 'Courier New', monospace;
+        }
+
+        /* ========== 充值金额 ========== */
+        .amount-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+        .amount-item {
+            padding: 14px 8px;
+            text-align: center;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: #f8fafc;
+        }
+        .amount-item.selected {
+            border-color: #3b82f6;
+            background: #eff6ff;
+            box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
+        }
+        .amount-item:active { transform: scale(0.96); }
+        .amount-value {
+            font-size: 18px;
+            font-weight: 700;
+            color: #1e40af;
+        }
+        .amount-unit {
+            font-size: 12px;
+            color: #64748b;
+            margin-top: 2px;
+        }
+        .amount-coupon {
+            font-size: 11px;
+            color: #ef4444;
+            margin-top: 4px;
+        }
+        .amount-pay {
+            font-size: 12px;
+            color: #e8941c;
+            font-weight: 700;
+            margin-top: 1px;
+        }
+
+        /* ========== 支付方式 ========== */
+        .pay-methods {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+        .pay-method {
+            flex: 1;
+            padding: 14px;
+            text-align: center;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: #f8fafc;
+        }
+        .pay-method.selected {
+            border-color: #10b981;
+            background: #ecfdf5;
+        }
+        .pay-method:active { transform: scale(0.97); }
+        .pay-method-icon { margin-bottom: 4px; display: flex; justify-content: center; }
+        .pay-method-name { font-size: 13px; font-weight: 600; color: #334155; }
+
+        /* ========== 收款码 ========== */
+        .qrcode-container {
+            text-align: center;
+            padding: 20px;
+            background: #f8fafc;
+            border-radius: 12px;
+            margin-bottom: 16px;
+        }
+        .qrcode-img {
+            width: 200px;
+            height: 200px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            object-fit: cover;
+            background: #fff;
+            margin-bottom: 10px;
+        }
+        .qrcode-placeholder {
+            width: 200px;
+            height: 200px;
+            border: 2px dashed #cbd5e1;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 10px;
+            background: #f1f5f9;
+            color: #94a3b8;
+            font-size: 14px;
+        }
+        .qrcode-tip { font-size: 13px; color: #64748b; }
+
+        /* ========== 上传截图 ========== */
+        .upload-area {
+            border: 2px dashed #cbd5e1;
+            border-radius: 12px;
+            padding: 24px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            background: #fafbfc;
+            margin-bottom: 16px;
+            position: relative;
+        }
+        .upload-area:hover { border-color: #3b82f6; background: #f0f7ff; }
+        .upload-area.has-image {
+            padding: 10px;
+            border-style: solid;
+            border-color: #22c55e;
+        }
+        .upload-icon { font-size: 36px; margin-bottom: 8px; }
+        .upload-text { font-size: 14px; color: #64748b; }
+        .upload-preview {
+            max-width: 100%;
+            max-height: 250px;
+            border-radius: 8px;
+            display: none;
+        }
+        .upload-preview.show { display: block; }
+        .upload-hidden { display: none; }
+
+        /* ========== 订单结果页 ========== */
+        .result-card { text-align: center; padding: 32px 20px; }
+        .result-icon { font-size: 64px; margin-bottom: 16px; }
+        .result-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #1e40af;
+            margin-bottom: 10px;
+        }
+        .result-desc {
+            font-size: 14px;
+            color: #64748b;
+            line-height: 1.6;
+            margin-bottom: 8px;
+        }
+        .result-order-id {
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            color: #64748b;
+            background: #f1f5f9;
+            padding: 8px 14px;
+            border-radius: 6px;
+            display: inline-block;
+            margin-top: 12px;
+            word-break: break-all;
+        }
+
+        /* ========== Toast ========== */
+        .toast {
+            position: fixed;
+            top: 50%; left: 50%;
+            transform: translate(-50%,-50%) scale(0.8);
+            background: rgba(0,0,0,0.75);
+            color: #fff;
+            padding: 14px 26px;
+            border-radius: 10px;
+            font-size: 14px;
+            z-index: 999;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(4px);
+        }
+        .toast.show { opacity: 1; visibility: visible; transform: translate(-50%,-50%) scale(1); }
+
+        /* ========== 加载动画 ========== */
+        .loading-spinner {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            border: 2.5px solid rgba(255,255,255,0.3);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ========== 步骤指示器 ========== */
+        .step-indicator {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            margin-bottom: 18px;
+            padding: 10px;
+        }
+        .step-dot {
+            width: 10px; height: 10px;
+            border-radius: 50%;
+            background: #cbd5e1;
+            transition: all 0.3s ease;
+        }
+        .step-dot.active { background: #3b82f6; transform: scale(1.3); }
+        .step-dot.done { background: #22c55e; }
+        .step-line { width: 30px; height: 2px; background: #e2e8f0; }
+        .step-line.done { background: #22c55e; }
+    </style>
+</head>
+<body>
+
+<!-- ===== 顶部导航栏 ===== -->
+<header class="header">
+    <div class="header-left">
+        <div class="header-icon">⛽</div>
+        <span class="header-title" id="siteTitle">充值中心</span>
+    </div>
+    <button class="home-btn" onclick="goHome()">
+        🏠 首页
+    </button>
+</header>
+
+<!-- ===== 主内容区 ===== -->
+<main class="main">
+
+    <!-- ==================== 第一步：领取代金券 ==================== -->
+    <section class="page-section active" id="step1">
+        <div class="banner">
+            <p class="banner-text" id="bannerText">🎉 品牌充值 · 代金券限时领</p>
+        </div>
+
+        <div class="notice-bar" id="noticeBar">
+            <span>📢</span>
+            <span class="notice-text" id="noticeText">欢迎使用充值服务，代金券限量发放中！</span>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <span class="card-dot"></span>
+                <h2 class="card-title">领取电子代金券</h2>
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">📱 手机号码</label>
+                <input type="tel" class="form-input" id="phoneInput"
+                    placeholder="请输入11位手机号码" maxlength="11">
+            </div>
+
+            <button class="btn-primary" id="claimBtn" onclick="claimCoupon()">
+                🎫 立即领取电子代金券
+            </button>
+
+            <p class="status-text" id="statusText1">
+                <span class="status-dot"></span> 等待操作中...
+            </p>
+
+            <button class="btn-secondary" id="nextBtn1" onclick="goStep(2)" disabled>
+                📄 下一步 →
+            </button>
+        </div>
+    </section>
+
+    <!-- ==================== 第二步：充值金额+支付 ==================== -->
+    <section class="page-section" id="step2">
+        <div class="step-indicator">
+            <span class="step-dot done"></span><span class="step-line done"></span>
+            <span class="step-dot active"></span><span class="step-line"></span>
+            <span class="step-dot"></span><span class="step-line"></span>
+            <span class="step-dot"></span>
+        </div>
+
+        <div class="coupon-info">
+            <p class="coupon-label">🎫 您的电子代金券编号</p>
+            <p class="coupon-code" id="showCouponCode">-</p>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <span class="card-dot"></span>
+                <h2 class="card-title">选择充值金额</h2>
+            </div>
+
+            <div class="amount-grid" id="amountGrid">
+                <div class="amount-item selected" data-recharge="200" data-coupon="28" data-pay="172" onclick="selectAmount(this)">
+                    <div class="amount-value">¥200</div>
+                    <div class="amount-coupon">券 -¥28</div>
+                    <div class="amount-pay">实付 ¥172</div>
+                </div>
+                <div class="amount-item" data-recharge="300" data-coupon="58" data-pay="242" onclick="selectAmount(this)">
+                    <div class="amount-value">¥300</div>
+                    <div class="amount-coupon">券 -¥58</div>
+                    <div class="amount-pay">实付 ¥242</div>
+                </div>
+                <div class="amount-item" data-recharge="400" data-coupon="98" data-pay="302" onclick="selectAmount(this)">
+                    <div class="amount-value">¥400</div>
+                    <div class="amount-coupon">券 -¥98</div>
+                    <div class="amount-pay">实付 ¥302</div>
+                </div>
+                <div class="amount-item" data-recharge="500" data-coupon="128" data-pay="372" onclick="selectAmount(this)">
+                    <div class="amount-value">¥500</div>
+                    <div class="amount-coupon">券 -¥128</div>
+                    <div class="amount-pay">实付 ¥372</div>
+                </div>
+            </div>
+
+            <div class="card-header" style="margin-top:8px;">
+                <span class="card-dot"></span>
+                <h2 class="card-title">选择支付方式</h2>
+            </div>
+
+            <div class="pay-methods">
+                <div class="pay-method selected" data-pay="wechat" onclick="selectPay(this)">
+                    <div class="pay-method-icon">
+                        <svg viewBox="0 0 48 48" width="34" height="34">
+                            <rect width="48" height="48" rx="11" fill="#07C160"/>
+                            <ellipse cx="19" cy="20" rx="9" ry="7" fill="#fff"/>
+                            <ellipse cx="30" cy="29" rx="8" ry="6" fill="#fff" opacity="0.92"/>
+                            <circle cx="15.5" cy="19" r="1.4" fill="#07C160"/>
+                            <circle cx="22.5" cy="19" r="1.4" fill="#07C160"/>
+                            <circle cx="27" cy="28" r="1.2" fill="#07C160"/>
+                            <circle cx="33" cy="28" r="1.2" fill="#07C160"/>
+                        </svg>
+                    </div>
+                    <div class="pay-method-name">微信支付</div>
+                </div>
+                <div class="pay-method" data-pay="alipay" onclick="selectPay(this)">
+                    <div class="pay-method-icon">
+                        <svg viewBox="0 0 48 48" width="34" height="34">
+                            <circle cx="24" cy="24" r="22" fill="#1677FF"/>
+                            <text x="24" y="33" font-size="24" fill="#fff" text-anchor="middle" font-family="'PingFang SC','Microsoft YaHei',sans-serif" font-weight="bold">支</text>
+                        </svg>
+                    </div>
+                    <div class="pay-method-name">支付宝</div>
+                </div>
+            </div>
+
+            <div class="qrcode-container">
+                <div class="qrcode-placeholder" id="qrPlaceholder">
+                    <span>📷 收款码加载中...</span>
+                </div>
+                <img class="qrcode-img" id="qrImage" style="display:none;" alt="收款码">
+                <p class="qrcode-tip" id="qrTip">请使用对应APP扫码付款</p>
+            </div>
+
+            <p class="status-text" id="statusText2">
+                <span class="status-dot"></span> 请选择金额和支付方式
+            </p>
+
+            <button class="btn-secondary" onclick="goStep(3)" id="nextBtn2">
+                📸 已付款，上传截图 →
+            </button>
+        </div>
+
+        <button class="btn-secondary" style="background:#e2e8f0;color:#64748b;" onclick="goStep(1)">
+            ← 返回上一步
+        </button>
+    </section>
+
+    <!-- ==================== 第三步：上传截图+提交订单 ==================== -->
+    <section class="page-section" id="step3">
+        <div class="step-indicator">
+            <span class="step-dot done"></span><span class="step-line done"></span>
+            <span class="step-dot done"></span><span class="step-line done"></span>
+            <span class="step-dot active"></span><span class="step-line"></span>
+            <span class="step-dot"></span>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <span class="card-dot"></span>
+                <h2 class="card-title">订单确认</h2>
+            </div>
+
+            <div style="background:#f8fafc;border-radius:10px;padding:16px;margin-bottom:16px;">
+                <div style="display:flex;justify-content:space-between;font-size:14px;padding:6px 0;border-bottom:1px solid #e2e8f0;">
+                    <span style="color:#64748b;">手机号</span>
+                    <span style="font-weight:600;" id="summaryPhone">-</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;font-size:14px;padding:6px 0;border-bottom:1px solid #e2e8f0;">
+                    <span style="color:#64748b;">电子券编号</span>
+                    <span style="font-weight:600;" id="summaryCoupon">-</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;font-size:14px;padding:6px 0;border-bottom:1px solid #e2e8f0;">
+                    <span style="color:#64748b;">充值档位</span>
+                    <span style="font-weight:700;color:#1e40af;" id="summaryRecharge">-</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;font-size:14px;padding:6px 0;border-bottom:1px solid #e2e8f0;">
+                    <span style="color:#64748b;">代金券抵扣</span>
+                    <span style="font-weight:700;color:#ef4444;" id="summaryCouponDeduct">-</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;font-size:14px;padding:6px 0;border-bottom:1px solid #e2e8f0;">
+                    <span style="color:#64748b;">实付金额</span>
+                    <span style="font-weight:700;color:#e8941c;" id="summaryAmount">-</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;font-size:14px;padding:6px 0;">
+                    <span style="color:#64748b;">支付方式</span>
+                    <span style="font-weight:600;" id="summaryPay">微信支付</span>
+                </div>
+            </div>
+
+            <div class="card-header">
+                <span class="card-dot"></span>
+                <h2 class="card-title">上传付款截图</h2>
+            </div>
+
+            <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()">
+                <div class="upload-icon" id="uploadIcon">📷</div>
+                <p class="upload-text" id="uploadText">点击上传付款截图凭证</p>
+                <img class="upload-preview" id="previewImg" alt="预览图">
+                <input type="file" id="fileInput" class="upload-hidden" accept="image/*" onchange="handleUpload(event)">
+            </div>
+
+            <button class="btn-primary" id="submitBtn" onclick="submitOrder()">
+                ✅ 提交订单
+            </button>
+
+            <p class="status-text" id="statusText3">
+                <span class="status-dot"></span> 请上传付款截图后提交
+            </p>
+        </div>
+
+        <button class="btn-secondary" style="background:#e2e8f0;color:#64748b;" onclick="goStep(2)">
+            ← 返回上一步
+        </button>
+    </section>
+
+    <!-- ==================== 第四步：订单结果 ==================== -->
+    <section class="page-section" id="step4">
+        <div class="card result-card">
+            <div class="result-icon">✅</div>
+            <h2 class="result-title">订单提交成功！</h2>
+            <p class="result-desc">您的订单已提交，客服将在短时间内审核处理。</p>
+            <p class="result-desc">请耐心等待，审核通过后将自动到账。</p>
+            <p class="result-order-id" id="resultOrderId">订单编号：-</p>
+        </div>
+
+        <div class="card" style="text-align:center;">
+            <p style="font-size:14px;color:#64748b;margin-bottom:14px;">如有疑问，请联系客服</p>
+            <button class="btn-secondary" onclick="contactKefu()">
+                💬 联系客服
+            </button>
+            <button class="btn-primary" style="margin-top:10px;background:linear-gradient(135deg,#3b82f6,#2563eb);" onclick="resetAll()">
+                🏠 返回首页
+            </button>
+        </div>
+    </section>
+
+</main>
+
+<!-- Toast提示 -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ============================================================
+//  ⚠️ 配置区：请填入你的 Supabase 项目信息
+//  获取方式：Supabase 控制台 → Project Settings → API
+//  - SUPABASE_URL      = Project URL
+//  - SUPABASE_ANON_KEY = anon public key（Project API keys 里的 anon/public）
+// ============================================================
+const SUPABASE_URL = '在此粘贴你的Project URL';
+const SUPABASE_ANON_KEY = '在此粘贴你的anon public key';
+
+// 初始化 Supabase：
+// 如果还是占位符或凭证无效，则跳过初始化，页面基础交互仍可用，
+// 仅数据功能不可用，避免脚本崩溃导致按钮"点击无反应"。
+// 注意：supabase-js 库已在全局声明 window.supabase，
+// 不能再声明同名变量，故客户端实例用 sbClient 命名，避免 "already been declared" 冲突
+let sbClient = null;
+try {
+    if (SUPABASE_URL && SUPABASE_URL.startsWith('http')) {
+        sbClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    } else {
+        console.warn('⚠️ 尚未配置 Supabase 凭证，仅可预览界面，数据功能不可用。请填入真实的 Project URL 与 anon key。');
+    }
+} catch (e) {
+    console.warn('⚠️ Supabase 初始化失败：', e);
+}
+
+// ============================================================
+//  全局变量
+// ============================================================
+let currentPhone = '';
+let couponCode = '';
+let selectedRecharge = 200;       // 充值档位金额（如 200）
+let selectedCoupon = 28;          // 代金券抵扣额度（如 28）
+let selectedAmount = 172;         // 实付金额（订单金额，如 172）
+let selectedPayMethod = 'wechat';
+let uploadedFile = null;          // 上传的截图文件（File 对象）
+const settingsCache = {};         // 后台设置缓存（从 Supabase 读取）
+
+// ============================================================
+//  工具函数：Toast提示
+// ============================================================
+function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+// ============================================================
+//  工具函数：验证手机号
+// ============================================================
+function validatePhone(phone) {
+    return /^1[3-9]\d{9}$/.test(phone);
+}
+
+// ============================================================
+//  工具函数：生成电子券编号
+// ============================================================
+function generateCouponCode() {
+    // 生成 12 位纯数字电子券编号
+    let code = '';
+    for (let i = 0; i < 12; i++) {
+        code += Math.floor(Math.random() * 10);
+    }
+    return code;
+}
+
+// ============================================================
+//  工具函数：生成订单编号
+// ============================================================
+function generateOrderId() {
+    const now = new Date();
+    const dateStr =
+        now.getFullYear().toString() +
+        String(now.getMonth()+1).padStart(2,'0') +
+        String(now.getDate()).padStart(2,'0') +
+        String(now.getHours()).padStart(2,'0') +
+        String(now.getMinutes()).padStart(2,'0') +
+        String(now.getSeconds()).padStart(2,'0');
+    const rand = Math.floor(Math.random() * 9000 + 1000);
+    return 'ORD' + dateStr + rand;
+}
+
+// ============================================================
+//  页面切换
+// ============================================================
+function goStep(stepNum) {
+    document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active'));
+    document.getElementById('step' + stepNum).classList.add('active');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    if (stepNum === 2) { updateQrCode(); updateSummary(); }
+    if (stepNum === 3) { updateSummary(); }
+}
+
+// ============================================================
+//  第一步：领取电子代金券
+// ============================================================
+async function claimCoupon() {
+    const phoneInput = document.getElementById('phoneInput');
+    const claimBtn = document.getElementById('claimBtn');
+    const statusText = document.getElementById('statusText1');
+    const nextBtn = document.getElementById('nextBtn1');
+
+    let phone = phoneInput.value.trim();
+
+    if (!phone) {
+        showToast('⚠️ 请先输入手机号码');
+        phoneInput.focus();
+        return;
+    }
+    if (!validatePhone(phone)) {
+        showToast('❌ 手机号格式不正确');
+        phoneInput.value = '';
+        phoneInput.focus();
+        return;
+    }
+
+    claimBtn.disabled = true;
+    claimBtn.innerHTML = '<span class="loading-spinner"></span> 正在领取...';
+    statusText.innerHTML = '<span class="status-dot"></span> 正在生成电子券...';
+
+    try {
+        await new Promise(r => setTimeout(r, 1200));
+        currentPhone = phone;
+        couponCode = generateCouponCode();
+        claimBtn.innerHTML = '✅ 已成功领取';
+        statusText.innerHTML = '<span class="status-dot"></span> 代金券已发放至您的账户';
+        statusText.classList.add('status-success');
+        nextBtn.disabled = false;
+        document.getElementById('showCouponCode').textContent = couponCode;
+        showToast('🎊 恭喜！代金券领取成功！');
+    } catch(e) {
+        claimBtn.disabled = false;
+        claimBtn.innerHTML = '🎫 立即领取电子代金券';
+        statusText.innerHTML = '<span class="status-dot"></span> 领取失败，请重试';
+        showToast('❌ 领取失败，请稍后重试');
+    }
+}
+
+// ============================================================
+//  第二步：选择金额
+// ============================================================
+function selectAmount(el) {
+    document.querySelectorAll('.amount-item').forEach(i => i.classList.remove('selected'));
+    el.classList.add('selected');
+    selectedRecharge = parseInt(el.dataset.recharge);
+    selectedCoupon = parseInt(el.dataset.coupon);
+    selectedAmount = parseInt(el.dataset.pay); // 实付金额作为订单金额
+}
+
+// ============================================================
+//  第二步：选择支付方式
+// ============================================================
+function selectPay(el) {
+    document.querySelectorAll('.pay-method').forEach(m => m.classList.remove('selected'));
+    el.classList.add('selected');
+    selectedPayMethod = el.dataset.pay;
+    updateQrCode();
+}
+
+// ============================================================
+//  第二步：根据支付方式显示收款码（从 settings 读取）
+// ============================================================
+function updateQrCode() {
+    const qrPlaceholder = document.getElementById('qrPlaceholder');
+    const qrImage = document.getElementById('qrImage');
+    const qrTip = document.getElementById('qrTip');
+
+    const wechatQr = settingsCache['wechat_qr'] || '';
+    const alipayQr = settingsCache['alipay_qr'] || '';
+
+    if (selectedPayMethod === 'wechat') {
+        qrTip.textContent = '请使用微信扫码付款';
+        if (wechatQr) {
+            qrPlaceholder.style.display = 'none';
+            qrImage.style.display = 'block';
+            qrImage.src = wechatQr;
+        } else {
+            qrPlaceholder.style.display = 'flex';
+            qrPlaceholder.innerHTML = '<span>💚 微信收款码<br>(管理员未设置)</span>';
+            qrImage.style.display = 'none';
+        }
+    } else {
+        qrTip.textContent = '请使用支付宝扫码付款';
+        if (alipayQr) {
+            qrPlaceholder.style.display = 'none';
+            qrImage.style.display = 'block';
+            qrImage.src = alipayQr;
+        } else {
+            qrPlaceholder.style.display = 'flex';
+            qrPlaceholder.innerHTML = '<span>💙 支付宝收款码<br>(管理员未设置)</span>';
+            qrImage.style.display = 'none';
+        }
+    }
+}
+
+// ============================================================
+//  更新订单摘要
+// ============================================================
+function updateSummary() {
+    document.getElementById('summaryPhone').textContent = currentPhone || '-';
+    document.getElementById('summaryCoupon').textContent = couponCode || '-';
+    document.getElementById('summaryRecharge').textContent = '¥' + selectedRecharge;
+    document.getElementById('summaryCouponDeduct').textContent = '-¥' + selectedCoupon;
+    document.getElementById('summaryAmount').textContent = '¥' + selectedAmount;
+    document.getElementById('summaryPay').textContent =
+        selectedPayMethod === 'wechat' ? '微信支付' : '支付宝';
+}
+
+// ============================================================
+//  第三步：处理截图上传（仅本地预览，提交时再上传到 Storage）
+// ============================================================
+function handleUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+        showToast('⚠️ 图片大小不能超过5MB');
+        return;
+    }
+
+    uploadedFile = file;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const preview = document.getElementById('previewImg');
+        preview.src = e.target.result;
+        preview.classList.add('show');
+        document.getElementById('uploadArea').classList.add('has-image');
+        document.getElementById('uploadIcon').style.display = 'none';
+        document.getElementById('uploadText').textContent = '点击重新选择图片';
+        document.getElementById('statusText3').innerHTML =
+            '<span class="status-dot"></span> 截图已选择，可提交订单';
+        document.getElementById('statusText3').classList.add('status-success');
+        showToast('✅ 截图已选择');
+    };
+    reader.readAsDataURL(file);
+}
+
+// ============================================================
+//  第三步：提交订单（上传截图到 Storage + 写入 orders 表）
+// ============================================================
+async function submitOrder() {
+    const submitBtn = document.getElementById('submitBtn');
+    const statusText = document.getElementById('statusText3');
+
+    if (!sbClient) {
+        showToast('⚠️ 尚未配置 Supabase，无法提交订单');
+        return;
+    }
+
+    if (!uploadedFile) {
+        showToast('⚠️ 请先上传付款截图');
+        return;
+    }
+
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span class="loading-spinner"></span> 提交中...';
+    statusText.innerHTML = '<span class="status-dot"></span> 正在上传凭证...';
+
+    try {
+        const orderId = generateOrderId();
+
+        // ---- 1. 上传截图到 Supabase Storage ----
+        statusText.innerHTML = '<span class="status-dot"></span> 上传付款截图...';
+        const fileExt = uploadedFile.name.split('.').pop() || 'jpg';
+        const filePath = `order_${orderId}_${Date.now()}.${fileExt}`;
+
+        const { data: upData, error: upErr } = await sbClient.storage
+            .from('screenshots')
+            .upload(filePath, uploadedFile, { upsert: false });
+
+        if (upErr) throw upErr;
+
+        // 获取公开 URL
+        const { data: urlData } = sbClient.storage
+            .from('screenshots')
+            .getPublicUrl(filePath);
+        const screenshotUrl = urlData.publicUrl;
+
+        // ---- 2. 写入 orders 表 ----
+        statusText.innerHTML = '<span class="status-dot"></span> 创建订单...';
+        const { error: insErr } = await sbClient.from('orders').insert({
+            order_id: orderId,
+            phone: currentPhone,
+            coupon_code: couponCode,
+            recharge: selectedRecharge,
+            coupon_deduct: selectedCoupon,
+            amount: selectedAmount,
+            pay_method: selectedPayMethod,
+            screenshot_url: screenshotUrl,
+            status: 'pending'
+        });
+        if (insErr) throw insErr;
+
+        document.getElementById('resultOrderId').textContent = '订单编号：' + orderId;
+        goStep(4);
+        showToast('🎉 订单提交成功！');
+    } catch(e) {
+        console.error('提交失败：', e);
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '✅ 提交订单';
+        statusText.innerHTML = '<span class="status-dot"></span> 提交失败，请重试';
+        showToast('❌ 提交失败：' + (e.message || '网络错误'));
+    }
+}
+
+// ============================================================
+//  联系客服（从 settings 读取）
+// ============================================================
+function contactKefu() {
+    const kefuName = settingsCache['kefu_name'] || '在线客服';
+    const kefuLink = settingsCache['kefu_link'] || '';
+    if (kefuLink) {
+        window.open(kefuLink, '_blank');
+    } else {
+        showToast('💬 客服联系方式暂未配置');
+    }
+}
+
+// ============================================================
+//  返回首页（重置状态）
+// ============================================================
+function resetAll() {
+    currentPhone = '';
+    couponCode = '';
+    selectedAmount = 30;
+    selectedPayMethod = 'wechat';
+    uploadedFile = null;
+
+    document.getElementById('phoneInput').value = '';
+    document.getElementById('claimBtn').disabled = false;
+    document.getElementById('claimBtn').innerHTML = '🎫 立即领取电子代金券';
+    document.getElementById('statusText1').innerHTML = '<span class="status-dot"></span> 等待操作中...';
+    document.getElementById('statusText1').classList.remove('status-success');
+    document.getElementById('nextBtn1').disabled = true;
+
+    document.querySelectorAll('.amount-item').forEach((item, idx) => item.classList.toggle('selected', idx === 0));
+    document.querySelectorAll('.pay-method').forEach((m, idx) => m.classList.toggle('selected', idx === 0));
+    selectedRecharge = 200;
+    selectedCoupon = 28;
+    selectedAmount = 172;
+
+    document.getElementById('previewImg').classList.remove('show');
+    document.getElementById('previewImg').src = '';
+    document.getElementById('uploadArea').classList.remove('has-image');
+    document.getElementById('uploadIcon').style.display = '';
+    document.getElementById('uploadText').textContent = '点击上传付款截图凭证';
+    document.getElementById('fileInput').value = '';
+    document.getElementById('submitBtn').disabled = false;
+    document.getElementById('submitBtn').innerHTML = '✅ 提交订单';
+    document.getElementById('statusText3').innerHTML = '<span class="status-dot"></span> 请上传付款截图后提交';
+    document.getElementById('statusText3').classList.remove('status-success');
+
+    goStep(1);
+}
+
+// ============================================================
+//  首页/返回首页按钮
+// ============================================================
+function goHome() {
+    if (document.getElementById('step1').classList.contains('active')) {
+        showToast('🏠 当前已在首页');
+    } else {
+        showToast('🏠 返回首页');
+        resetAll();
+    }
+}
+
+// ============================================================
+//  页面加载：从 Supabase settings 表读取配置
+// ============================================================
+window.addEventListener('DOMContentLoaded', async function() {
+    try {
+        if (!supabase) return; // 未配置凭证则不读取，避免报错
+        const { data, error } = await supabase
+            .from('settings')
+            .select('key, value');
+
+        if (!error && data) {
+            data.forEach(row => { settingsCache[row.key] = row.value; });
+
+            if (settingsCache['site_name']) {
+                document.getElementById('siteTitle').textContent = settingsCache['site_name'];
+                document.title = settingsCache['site_name'];
+            }
+            if (settingsCache['notice']) {
+                document.getElementById('noticeText').textContent = settingsCache['notice'];
+            }
+            if (settingsCache['banner']) {
+                document.getElementById('bannerText').innerHTML = settingsCache['banner'];
+            }
+        } else if (error) {
+            console.warn('读取设置失败（可能尚未建表）：', error.message);
+        }
+    } catch(e) {
+        console.warn('Supabase 连接异常：', e);
+    }
+});
+
+// ============================================================
+//  手机号只允许数字
+// ============================================================
+document.getElementById('phoneInput').addEventListener('input', function(e) {
+    this.value = this.value.replace(/\D/g, '');
+});
+</script>
+
+</body>
+</html>
