@@ -1203,8 +1203,8 @@ function goHome() {
 // ============================================================
 window.addEventListener('DOMContentLoaded', async function() {
     try {
-        if (!supabase) return; // 未配置凭证则不读取，避免报错
-        const { data, error } = await supabase
+        if (!sbClient) return; // 未配置凭证则不读取，避免报错
+        const { data, error } = await sbClient
             .from('settings')
             .select('key, value');
 
