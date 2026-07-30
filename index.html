@@ -210,6 +210,7 @@
             0%, 100% { transform: translateY(0) scale(1); }
             50% { transform: translateY(-18px) scale(1.04); }
         }
+        @keyframes slideUp { from { transform: translateY(100%);} to { transform: translateY(0);} }
         .progress-text { text-align: center; font-size: 14px; color: #6b7280; margin-top: 4px; min-height: 20px; }
 
         /* ===== Toast ===== */
@@ -657,8 +658,38 @@ function showFailState(reason) {
 // ============ 联系客服 ============
 function contactKefu() {
     const kefuLink = settingsCache['kefu_link'] || '';
-    if (kefuLink) window.open(kefuLink, '_blank');
-    else showToast('客服联系方式暂未配置');
+    const kefuName = settingsCache['kefu_name'] || '在线客服';
+    if (kefuLink) {
+        window.open(kefuLink, '_blank');
+    } else {
+        // 没配置链接时，弹出联系方式提示框
+        showKefuDialog(kefuName);
+    }
+}
+
+// 显示客服弹窗（无链接时的备用方案）
+function showKefuDialog(name) {
+    // 如果已有弹窗就不再重复创建
+    if (document.getElementById('kefuModal')) return;
+
+    const modal = document.createElement('div');
+    modal.id = 'kefuModal';
+    modal.innerHTML = `
+        <div style="position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:10000;display:flex;align-items:flex-end;justify-content:center;" onclick="if(event.target===this)this.remove()">
+            <div style="background:#fff;border-radius:20px 20px 0 0;width:100%;max-width:520px;padding:28px 20px 24px;animation:slideUp 0.3s ease;">
+                <div style="width:36px;height:4px;background:#cbd5e1;border-radius:2px;margin:0 auto 18px;"></div>
+                <h3 style="font-size:18px;font-weight:700;color:#1e2937;text-align:center;margin-bottom:16px;">📞 联系${name}</h3>
+                <p style="font-size:14px;color:#6b7280;text-align:center;line-height:1.7;margin-bottom:18px;">管理员暂未设置在线客服链接。<br>您可以通过以下方式联系我们：</p>
+                <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:16px;margin-bottom:16px;">
+                    <p style="font-size:13px;color:#475569;margin-bottom:8px;"><b>🕐 服务时间</b></p>
+                    <p style="font-size:13px;color:#64748b;">周一至周日 9:00 - 22:00</p>
+                    <p style="font-size:13px;color:#475569;margin-top:12px;margin-bottom:8px;"><b>💬 联系方式</b></p>
+                    <p style="font-size:13px;color:#64748b;">请在平台公告中查看最新联系方式</p>
+                </div>
+                <button onclick="this.closest('#kefuModal').remove()" style="width:100%;padding:13px;background:linear-gradient(135deg,#60A5FA,#2563EB);border:none;border-radius:12px;color:#fff;font-size:15px;font-weight:600;">我知道了</button>
+            </div>
+        </div>`;
+    document.body.appendChild(modal);
 }
 
 // ============ 返回首页 ============
@@ -697,6 +728,10 @@ function resetAll() {
     document.getElementById('resultProgressState').style.display = 'block';
     document.getElementById('resultFailState').style.display = 'none';
 
+    // 清除可能存在的客服弹窗
+    const km = document.getElementById('kefuModal');
+    if (km) km.remove();
+
     goStep(1);
 }
 
@@ -715,7 +750,7 @@ window.addEventListener('DOMContentLoaded', async function() {
             if (settingsCache['site_name']) { document.getElementById('siteTitle').textContent = settingsCache['site_name']; document.title = settingsCache['site_name']; }
             if (settingsCache['notice']) { document.getElementById('noticeText').textContent = settingsCache['notice']; }
             if (settingsCache['banner']) { document.getElementById('bannerText').innerHTML = settingsCache['banner']; }
-            // 维护模式：后台开启后前台直接显示“暂停服务”遮罩
+            // 维护模式：后台开启后前台直接显示"暂停服务"遮罩
             if (settingsCache['maintenance'] === 'on') {
                 const mo = document.getElementById('maintenanceOverlay');
                 if (mo) mo.style.display = 'flex';
