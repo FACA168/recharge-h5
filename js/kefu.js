@@ -18,10 +18,7 @@ try {
 // 客服数据缓存
 const kefuData = {
     name: '',
-    link: '',
-    wechat: '',
-    qq: '',
-    phone: ''
+    link: ''
 };
 
 // 页面加载时读取设置
@@ -52,19 +49,6 @@ function updateKefuPage() {
     if (kefuData['kefu_link']) {
         document.getElementById('gotoLinkBtn').classList.remove('hidden');
     }
-
-    // 微信号
-    if (kefuData['kefu_wechat']) {
-        document.getElementById('wechatAccountDesc').textContent = kefuData['kefu_wechat'];
-    }
-    // QQ号
-    if (kefuData['kefu_qq']) {
-        document.getElementById('qqAccountDesc').textContent = kefuData['kefu_qq'];
-    }
-    // 电话
-    if (kefuData['kefu_phone']) {
-        document.getElementById('phoneAccountDesc').textContent = kefuData['kefu_phone'];
-    }
 }
 
 // 点击"前往客服平台"按钮 → 转跳到后台设置的链接
@@ -74,49 +58,6 @@ function openKefuLink() {
         window.location.href = link;
     } else {
         showToast('管理员暂未配置客服链接');
-    }
-}
-
-// 复制联系方式
-function copyContact(type, key) {
-    let value = kefuData['kefu_' + key] || '';
-    if (!value) {
-        showToast('管理员暂未设置' + type + '，请在平台公告中查看联系方式');
-        return;
-    }
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(value).then(() => {
-            showToast(type + '已复制：' + value);
-        }).catch(() => {
-            fallbackCopy(value, type);
-        });
-    } else {
-        fallbackCopy(value, type);
-    }
-}
-
-// 兼容旧浏览器的复制方法
-function fallbackCopy(text, type) {
-    const input = document.createElement('input');
-    input.value = text;
-    document.body.appendChild(input);
-    input.select();
-    try {
-        document.execCommand('copy');
-        showToast(type + '已复制：' + text);
-    } catch(e) {
-        showToast('请手动复制：' + text);
-    }
-    document.body.removeChild(input);
-}
-
-// 拨打电话
-function callPhone() {
-    const phone = kefuData['kefu_phone'] || '';
-    if (phone) {
-        window.location.href = 'tel:' + phone.replace(/[^0-9+]/g, '');
-    } else {
-        showToast('管理员暂未设置联系电话，请在平台公告中查看');
     }
 }
 
