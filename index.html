@@ -129,12 +129,12 @@
                 <h2 class="card-title">上传付款凭证</h2>
             </div>
 
-            <label class="upload-area" id="uploadArea" for="fileInput">
+            <!-- 上传区域：直接用 div + onclick 动态创建 input（兼容所有手机浏览器） -->
+            <div class="upload-area" id="uploadArea">
                 <div class="upload-icon" id="uploadIcon">+</div>
                 <p class="upload-text" id="uploadText">点击上传付款截图凭证</p>
                 <img class="upload-preview" id="previewImg" alt="预览图">
-                <input type="file" id="fileInput" class="upload-hidden" accept="image/*" onchange="handleUpload(event)">
-            </label>
+            </div>
 
             <button class="btn-primary" id="submitBtn" onclick="submitOrder()">我已支付，提交充值</button>
 

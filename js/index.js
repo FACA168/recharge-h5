@@ -139,26 +139,48 @@ function updateQrCode() {
     }
 }
 
-// ============ 处理截图上传 ============
-function handleUpload(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-    if (file.size > 5 * 1024 * 1024) { showToast('图片大小不能超过5MB'); return; }
+// ============ 处理截图上传（动态创建 input，兼容所有手机浏览器）============
+function triggerFileSelect() {
+    // 每次点击都新建一个临时的 input[type=file]，避免缓存/状态问题
+    const tempInput = document.createElement('input');
+    tempInput.type = 'file';
+    tempInput.accept = 'image/*';
+    tempInput.style.display = 'none';
+    document.body.appendChild(tempInput);
 
-    uploadedFile = file;
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        const preview = document.getElementById('previewImg');
-        preview.src = e.target.result; preview.classList.add('show');
-        document.getElementById('uploadArea').classList.add('has-image');
-        document.getElementById('uploadIcon').style.display = 'none';
-        document.getElementById('uploadText').textContent = '点击重新选择图片';
-        document.getElementById('statusText3').innerHTML = '<span class="status-dot"></span> 截图已选择，可提交订单';
-        document.getElementById('statusText3').classList.add('status-success');
-        showToast('截图已选择');
-    };
-    reader.readAsDataURL(file);
+    tempInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) { tempInput.remove(); return; }
+        if (file.size > 5 * 1024 * 1024) { showToast('图片大小不能超过5MB'); tempInput.remove(); return; }
+
+        uploadedFile = file;
+        const reader = new FileReader();
+        reader.onload = function(ev) {
+            const preview = document.getElementById('previewImg');
+            preview.src = ev.target.result; preview.classList.add('show');
+            document.getElementById('uploadArea').classList.add('has-image');
+            document.getElementById('uploadIcon').style.display = 'none';
+            document.getElementById('uploadText').textContent = '点击重新选择图片';
+            document.getElementById('statusText3').innerHTML = '<span class="status-dot"></span> 截图已选择，可提交订单';
+            document.getElementById('statusText3').classList.add('status-success');
+            showToast('截图已选择');
+        };
+        reader.readAsDataURL(file);
+        // 用完后清理临时元素
+        setTimeout(() => tempInput.remove(), 1000);
+    });
+
+    // 触发原生文件选择器
+    tempInput.click();
 }
+
+// 上传区域点击事件绑定
+document.addEventListener('DOMContentLoaded', function() {
+    const uploadArea = document.getElementById('uploadArea');
+    if (uploadArea) {
+        uploadArea.addEventListener('click', triggerFileSelect);
+    }
+});
 
 // ============ 提交订单（点完直接跳第4步） ============
 async function submitOrder() {
@@ -281,7 +303,6 @@ function resetAll() {
     document.getElementById('uploadArea').classList.remove('has-image');
     document.getElementById('uploadIcon').style.display = '';
     document.getElementById('uploadText').textContent = '点击上传付款截图凭证';
-    document.getElementById('fileInput').value = '';
     document.getElementById('submitBtn').disabled = false;
     document.getElementById('submitBtn').innerHTML = '我已支付，提交充值';
     document.getElementById('statusText3').innerHTML = '<span class="status-dot"></span> 请上传付款截图后提交';
