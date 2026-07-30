@@ -160,6 +160,7 @@ body {
 
 /* ===== 上传截图 ===== */
 .upload-area {
+    display: block; /* 明确 block，避免 label 继承 inline 导致布局异常 */
     border: 2px dashed #d1d5db; border-radius: 12px; padding: 22px; text-align: center;
     cursor: pointer; transition: all 0.2s ease; background: #fafafa;
     margin-bottom: 14px; position: relative;
@@ -178,6 +179,12 @@ body {
 }
 
 /* ===== 结果页 ===== */
+/* step4 默认隐藏（继承 .page-section display:none），激活时才显示为 flex 居中布局 */
+.result-step.active {
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; min-height: calc(100vh - 120px);
+    position: relative; overflow: hidden;
+}
 .result-card { text-align: center; padding: 30px 18px; }
 .result-icon { font-size: 52px; margin-bottom: 12px; }
 .result-title { font-size: 19px; font-weight: 800; color: #1f2937; margin-bottom: 8px; }
