@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>在线客服</title>
+    <!-- 引入 Supabase JS SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- 外部样式 -->
+    <link rel="stylesheet" href="css/kefu.css">
+</head>
+<body>
+
+<!-- 顶部导航栏 -->
+<header class="header">
+    <button class="back-btn" onclick="goBack()">←</button>
+    <span class="header-title">在线客服</span>
+</header>
+
+<!-- 主内容区 -->
+<main class="main">
+
+    <!-- 客服信息头部 -->
+    <div class="kefu-hero">
+        <div class="kefu-avatar">🎧</div>
+        <h1 class="kefu-name" id="kefuNameDisplay">在线客服小助手</h1>
+        <div class="kefu-status">
+            <span class="status-dot-online"></span>
+            在线服务中
+        </div>
+    </div>
+
+    <!-- 前往客服平台（后台设了链接才显示） -->
+    <button class="goto-link-btn hidden" id="gotoLinkBtn" onclick="openKefuLink()">
+        🚀 前往在线客服平台
+    </button>
+
+    <!-- 服务时间 -->
+    <div class="card">
+        <div class="card-header">
+            <span class="card-dot"></span>
+            <h2 class="card-title">🕐 服务时间</h2>
+        </div>
+        <div class="time-item">
+            <span class="time-icon">📅</span>
+            <div>
+                <p class="time-text">工作日服务</p>
+                <p class="time-value">周一至周五 9:00 - 22:00</p>
+            </div>
+        </div>
+        <div class="time-item">
+            <span class="time-icon">🌙</span>
+            <div>
+                <p class="time-text">周末服务</p>
+                <p class="time-value">周六至周日 10:00 - 21:00</p>
+            </div>
+        </div>
+        <div class="time-item">
+            <span class="time-icon">⚡</span>
+            <div>
+                <p class="time-text">响应速度</p>
+                <p class="time-value">平均 5 分钟内回复</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 联系方式 -->
+    <div class="card">
+        <div class="card-header">
+            <span class="card-dot"></span>
+            <h2 class="card-title">💬 联系方式</h2>
+        </div>
+        <div class="contact-list" id="contactList">
+            <!-- 微信 -->
+            <div class="contact-item" onclick="copyContact('微信客服', 'wechat')">
+                <div class="contact-icon wechat">💬</div>
+                <div class="contact-info">
+                    <p class="contact-name">微信客服</p>
+                    <p class="contact-desc" id="wechatAccountDesc">点击复制微信号</p>
+                </div>
+                <span class="contact-arrow">›</span>
+            </div>
+            <!-- QQ -->
+            <div class="contact-item" onclick="copyContact('QQ客服', 'qq')">
+                <div class="contact-icon qq">🐧</div>
+                <div class="contact-info">
+                    <p class="contact-name">QQ客服</p>
+                    <p class="contact-desc" id="qqAccountDesc">点击复制QQ号</p>
+                </div>
+                <span class="contact-arrow">›</span>
+            </div>
+            <!-- 电话 -->
+            <div class="contact-item" onclick="callPhone()">
+                <div class="contact-icon phone">📞</div>
+                <div class="contact-info">
+                    <p class="contact-name">电话咨询</p>
+                    <p class="contact-desc" id="phoneAccountDesc">点击拨打电话</p>
+                </div>
+                <span class="contact-arrow">›</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 温馨提示 -->
+    <div class="tips-card">
+        <p class="tips-title">💡 温馨提示</p>
+        <ul class="tips-list">
+            <li>充值相关问题请提供订单编号，方便我们快速定位处理</li>
+            <li>工作时间内通常 5 分钟内回复，高峰期可能稍有延迟</li>
+            <li>如遇紧急问题，建议优先使用微信或电话联系我们</li>
+            <li>请勿向非官方渠道透露您的个人信息和支付密码</li>
+        </ul>
+    </div>
+
+    <div class="spacer"></div>
+
+</main>
+
+<!-- 底部快捷操作栏 -->
+<div class="bottom-bar">
+    <button class="chat-btn" onclick="goBack()">← 返回充值页面</button>
+</div>
+
+<!-- 外部脚本 -->
+<script src="js/kefu.js"></script>
+
+</body>
+</html>

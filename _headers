@@ -1,0 +1,28 @@
+# Cloudflare Pages 缓存规则（解决：改了不生效 / 加载慢）
+# 部署到 Cloudflare Pages 后自动生效，无需任何构建命令
+
+# HTML 页面：不缓存，每次都向源站确认最新版本
+/*.html
+  Cache-Control: public, max-age=0, must-revalidate
+  X-Frame-Options: SAMEORIGIN
+  X-Content-Type-Options: nosniff
+
+# 图片等静态资源：缓存 1 小时（这些文件改动少）
+/*.png
+  Cache-Control: public, max-age=3600, immutable
+/*.jpg
+  Cache-Control: public, max-age=3600, immutable
+/*.jpeg
+  Cache-Control: public, max-age=3600, immutable
+/*.svg
+  Cache-Control: public, max-age=3600, immutable
+/*.gif
+  Cache-Control: public, max-age=3600, immutable
+/*.ico
+  Cache-Control: public, max-age=3600, immutable
+
+# JS / CSS：缓存 1 小时
+/*.js
+  Cache-Control: public, max-age=3600, immutable
+/*.css
+  Cache-Control: public, max-age=3600, immutable

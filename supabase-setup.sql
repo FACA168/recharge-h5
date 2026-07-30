@@ -24,6 +24,7 @@ create table if not exists orders (
 -- ============================================================
 --  2. 创建设置表 settings（key-value 结构）
 --     存储：网站名称 / 公告 / Banner / 客服名称 / 客服链接 / 微信收款码 / 支付宝收款码
+--           / maintenance（维护模式：值为 'on' 时前台显示“暂停服务中”，留空或 'off' 为正常营业）
 -- ============================================================
 create table if not exists settings (
   key   text primary key,
