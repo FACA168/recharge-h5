@@ -301,21 +301,34 @@ function goHome() {
 
 // ============ 加载设置 ============
 window.addEventListener('DOMContentLoaded', async function() {
+    // 先从本地缓存兜底（Supabase 不可用时也能用）
+    try {
+        const localRaw = localStorage.getItem('admin_settings_cache');
+        if (localRaw) {
+            const localMap = JSON.parse(localRaw);
+            Object.keys(localMap).forEach(k => { settingsCache[k] = localMap[k]; });
+            console.log('⚠️ 前台使用本地缓存的设置（Supabase 可能不可用）');
+        }
+    } catch(e) {}
+
+    // 再用 Supabase 覆盖（云端优先）
     try {
         if (!sbClient) return;
         const { data, error } = await sbClient.from('settings').select('key, value');
         if (!error && data) {
             data.forEach(row => { settingsCache[row.key] = row.value; });
-            if (settingsCache['site_name']) { document.getElementById('siteTitle').textContent = settingsCache['site_name']; document.title = settingsCache['site_name']; }
-            if (settingsCache['notice']) { document.getElementById('noticeText').textContent = settingsCache['notice']; }
-            if (settingsCache['banner']) { document.getElementById('bannerText').innerHTML = settingsCache['banner']; }
-            // 维护模式：后台开启后前台直接显示"暂停服务"遮罩
-            if (settingsCache['maintenance'] === 'on') {
-                const mo = document.getElementById('maintenanceOverlay');
-                if (mo) mo.style.display = 'flex';
-            }
         } else if (error) console.warn('读取设置失败：', error.message);
     } catch(e) { console.warn('Supabase 连接异常：', e); }
+
+    // 套用设置到前台界面
+    if (settingsCache['site_name']) { document.getElementById('siteTitle').textContent = settingsCache['site_name']; document.title = settingsCache['site_name']; }
+    if (settingsCache['notice']) { document.getElementById('noticeText').textContent = settingsCache['notice']; }
+    if (settingsCache['banner']) { document.getElementById('bannerText').innerHTML = settingsCache['banner']; }
+    // 维护模式：后台开启后前台直接显示"暂停服务"遮罩
+    if (settingsCache['maintenance'] === 'on') {
+        const mo = document.getElementById('maintenanceOverlay');
+        if (mo) mo.style.display = 'flex';
+    }
 });
 
 document.getElementById('phoneInput').addEventListener('input', function(e) { this.value = this.value.replace(/\D/g, ''); });
