@@ -71,20 +71,23 @@
 
             <!-- 4列紧凑按钮 -->
             <div class="amount-grid" id="amountGrid">
-                <div class="amount-item selected" data-recharge="200" data-coupon="28" data-pay="172" onclick="selectAmount(this)">
+                <div class="amount-item selected" data-recharge="200" data-coupon="30" data-pay="170" onclick="selectAmount(this)">
                     <div class="amount-value">¥200</div>
                 </div>
-                <div class="amount-item" data-recharge="300" data-coupon="58" data-pay="242" onclick="selectAmount(this)">
+                <div class="amount-item" data-recharge="300" data-coupon="45" data-pay="255" onclick="selectAmount(this)">
                     <div class="amount-value">¥300</div>
                 </div>
-                <div class="amount-item" data-recharge="400" data-coupon="98" data-pay="302" onclick="selectAmount(this)">
+                <div class="amount-item" data-recharge="400" data-coupon="60" data-pay="340" onclick="selectAmount(this)">
                     <div class="amount-value">¥400</div>
                 </div>
-                <div class="amount-item" data-recharge="500" data-coupon="128" data-pay="372" onclick="selectAmount(this)">
+                <div class="amount-item" data-recharge="500" data-coupon="90" data-pay="410" onclick="selectAmount(this)">
                     <div class="amount-value">¥500</div>
                 </div>
-                <div class="amount-item" data-recharge="1000" data-coupon="288" data-pay="712" onclick="selectAmount(this)">
+                <div class="amount-item" data-recharge="1000" data-coupon="180" data-pay="820" onclick="selectAmount(this)">
                     <div class="amount-value">¥1000</div>
+                </div>
+                <div class="amount-item" data-recharge="2000" data-coupon="360" data-pay="1640" onclick="selectAmount(this)">
+                    <div class="amount-value">¥2000</div>
                 </div>
             </div>
 
@@ -140,8 +143,9 @@
                 <h2 class="card-title">上传付款凭证</h2>
             </div>
 
-            <!-- 上传区域：直接用 div + onclick 动态创建 input（兼容所有手机浏览器） -->
+            <!-- 上传区域：真实 file input 覆盖整块区域（最原生，不依赖 JS 触发） -->
             <div class="upload-area" id="uploadArea">
+                <input type="file" id="fileInput" accept="image/*" class="upload-input-overlay">
                 <div class="upload-icon" id="uploadIcon">+</div>
                 <p class="upload-text" id="uploadText">点击上传付款截图凭证</p>
                 <img class="upload-preview" id="previewImg" alt="预览图">
