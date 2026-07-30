@@ -110,7 +110,7 @@ body {
 .status-success .status-dot { background: #16A34A; animation: none; }
 
 /* ===== 充值金额按钮 ===== */
-.amount-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 12px; }
+.amount-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 12px; }
 .amount-item {
     padding: 11px 4px; text-align: center; border: 1.5px solid #D1D5DB; border-radius: 10px;
     cursor: pointer; transition: all 0.2s ease; background: #FFFFFF;

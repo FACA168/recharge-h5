@@ -331,6 +331,16 @@ function applySettingsToUI() {
         const mo = document.getElementById('maintenanceOverlay');
         if (mo) mo.style.display = 'flex';
     }
+    // 网站 Logo：后台上传了就用图片，否则用默认加油图标
+    if (settingsCache['logo_url']) {
+        const logoImg = document.getElementById('logoImg');
+        const logoSvg = document.getElementById('logoSvg');
+        if (logoImg && logoSvg) {
+            logoImg.src = settingsCache['logo_url'];
+            logoImg.style.display = 'block';
+            logoSvg.style.display = 'none';
+        }
+    }
 }
 
 // ============ 加载设置 ============

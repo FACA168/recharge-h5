@@ -82,6 +82,16 @@
                 </div>
 
                 <div class="setting-group">
+                    <label class="setting-label">🖼️ 网站 Logo</label>
+                    <div class="qr-upload-area" onclick="document.getElementById('fileLogo').click()">
+                        <span style="font-size:32px;">🖼️</span>
+                        <p style="font-size:13px;color:#64748b;margin-top:4px;" id="logoUploadText">点击上传 Logo 图片（建议正方形）</p>
+                        <img class="qr-preview-img" id="previewLogo" alt="Logo 预览">
+                        <input type="file" id="fileLogo" style="display:none;" accept="image/*"
+                            onchange="previewQr(this,'previewLogo','logoUploadText')">
+                    </div>
+                </div>
+                <div class="setting-group">
                     <label class="setting-label">🏷️ 网站名称</label>
                     <input type="text" class="setting-input" id="setSiteName" placeholder="例如：充值中心">
                 </div>

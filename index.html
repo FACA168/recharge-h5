@@ -11,10 +11,18 @@
 
 <!-- 顶部导航栏 -->
 <header class="header">
-    <div class="header-left">
-        <div class="header-icon">R</div>
-        <span class="header-title" id="siteTitle">充值中心</span>
-    </div>
+        <div class="header-left">
+            <div class="header-icon" id="logoBox">
+                <img id="logoImg" alt="logo" style="display:none;width:24px;height:24px;border-radius:6px;object-fit:cover;">
+                <svg id="logoSvg" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="3" y1="22" x2="15" y2="22"></line>
+                    <line x1="4" y1="9" x2="14" y2="9"></line>
+                    <path d="M14 22V4a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v18"></path>
+                    <path d="M14 13h2a2 2 0 0 1 2 2v2a2 2 0 0 0 2 2 2 2 0 0 0 2-2V9.83a2 2 0 0 0-.59-1.42L18 5"></path>
+                </svg>
+            </div>
+            <span class="header-title" id="siteTitle">充值中心</span>
+        </div>
     <button class="home-btn" onclick="goHome()">首页</button>
 </header>
 
@@ -74,6 +82,9 @@
                 </div>
                 <div class="amount-item" data-recharge="500" data-coupon="128" data-pay="372" onclick="selectAmount(this)">
                     <div class="amount-value">¥500</div>
+                </div>
+                <div class="amount-item" data-recharge="1000" data-coupon="288" data-pay="712" onclick="selectAmount(this)">
+                    <div class="amount-value">¥1000</div>
                 </div>
             </div>
 

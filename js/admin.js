@@ -337,10 +337,13 @@ async function uploadQr(file, prefix) {
 function collectFormSettings() {
     const wechatPreview = document.getElementById('previewWechat');
     const alipayPreview = document.getElementById('previewAlipay');
+    const logoPreview = document.getElementById('previewLogo');
     let wechatUrl = wechatPreview ? wechatPreview.src : '';
     let alipayUrl = alipayPreview ? alipayPreview.src : '';
+    let logoUrl = logoPreview ? logoPreview.src : '';
     if (!wechatUrl || !wechatUrl.startsWith('http')) wechatUrl = '';
     if (!alipayUrl || !alipayUrl.startsWith('http')) alipayUrl = '';
+    if (!logoUrl || !logoUrl.startsWith('http')) logoUrl = '';
 
     const rows = [
         { key: 'site_name',   value: document.getElementById('setSiteName').value.trim() },
@@ -348,6 +351,7 @@ function collectFormSettings() {
         { key: 'banner',      value: document.getElementById('setBanner').value.trim() },
         { key: 'kefu_name',   value: document.getElementById('setKefuName').value.trim() },
         { key: 'kefu_link',   value: document.getElementById('setKefuLink').value.trim() },
+        { key: 'logo_url',    value: logoUrl },
         { key: 'wechat_qr',   value: wechatUrl },
         { key: 'alipay_qr',   value: alipayUrl },
         { key: 'maintenance', value: document.getElementById('setMaintenance').value }
@@ -397,6 +401,13 @@ function fillSettingsToForm(map) {
         const at = document.getElementById('alipayUploadText');
         if (at) at.textContent = '✅ 已设置，点击可更换';
     }
+    // Logo 预览
+    if (map['logo_url']) {
+        const pl = document.getElementById('previewLogo');
+        if (pl) { pl.src = map['logo_url']; pl.classList.add('show'); }
+        const lt = document.getElementById('logoUploadText');
+        if (lt) lt.textContent = '✅ 已设置，点击可更换';
+    }
 }
 
 async function saveSettings() {
@@ -413,9 +424,11 @@ async function saveSettings() {
     // 处理收款码图片上传
     const wechatFile = document.getElementById('fileWechat') ? document.getElementById('fileWechat').files[0] : null;
     const alipayFile = document.getElementById('fileAlipay') ? document.getElementById('fileAlipay').files[0] : null;
+    const logoFile = document.getElementById('fileLogo') ? document.getElementById('fileLogo').files[0] : null;
 
     let wechatUrl = rows.find(r => r.key === 'wechat_qr') ? (rows.find(r => r.key === 'wechat_qr').value || '') : '';
     let alipayUrl = rows.find(r => r.key === 'alipay_qr') ? (rows.find(r => r.key === 'alipay_qr').value || '') : '';
+    let logoUrl = rows.find(r => r.key === 'logo_url') ? (rows.find(r => r.key === 'logo_url').value || '') : '';
 
     if (wechatFile) {
         try { wechatUrl = await uploadQr(wechatFile, 'wechat'); } catch(e) {
@@ -429,12 +442,20 @@ async function saveSettings() {
             showToast('⚠️ 支付宝收款码上传失败，其他设置继续保存…');
         }
     }
+    if (logoFile) {
+        try { logoUrl = await uploadQr(logoFile, 'logo'); } catch(e) {
+            console.warn('Logo 上传失败：', e);
+            showToast('⚠️ Logo 上传失败，其他设置继续保存…');
+        }
+    }
     if (!wechatUrl || !wechatUrl.startsWith('http')) wechatUrl = '';
     if (!alipayUrl || !alipayUrl.startsWith('http')) alipayUrl = '';
+    if (!logoUrl || !logoUrl.startsWith('http')) logoUrl = '';
 
     // 更新 rows 中的 URL
     rows.forEach(r => { if (r.key === 'wechat_qr') r.value = wechatUrl; });
     rows.forEach(r => { if (r.key === 'alipay_qr') r.value = alipayUrl; });
+    rows.forEach(r => { if (r.key === 'logo_url') r.value = logoUrl; });
 
     // 再次更新本地缓存（含上传后的 URL）
     saveToLocal(rows);
