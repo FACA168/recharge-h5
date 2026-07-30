@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>充值中心</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+/* ===== 充值中心前台样式（index.css） ===== */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+    background: #f5f7fa;
+    color: #2d3748;
+    min-height: 100vh;
+}
+
+/* ===== 顶部导航栏（蓝→青绿渐变） ===== */
+.header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 15px 18px;
+    background: linear-gradient(135deg, #5B9BD5 0%, #6BB5D6 40%, #7ECBA1 100%);
+    position: sticky; top: 0; z-index: 100;
+    box-shadow: 0 4px 16px rgba(91,155,213,0.25), inset 0 1px 0 rgba(255,255,255,0.20);
+}
+.header-left { display: flex; align-items: center; gap: 10px; }
+.header-icon {
+    width: 34px; height: 34px; background: rgba(255,255,255,0.20);
+    border-radius: 10px; display: flex; align-items: center; justify-content: center;
+    font-size: 17px; font-weight: 800; color: #fff;
+}
+.header-title { color: #fff; font-size: 19px; font-weight: 700; letter-spacing: 1px; }
+.home-btn {
+    display: flex; align-items: center; gap: 4px; padding: 7px 15px;
+    background: rgba(255,255,255,0.20); border: none; border-radius: 20px;
+    color: #fff; font-size: 13px; cursor: pointer; transition: all 0.2s ease; font-weight: 500;
+}
+.home-btn:active { transform: scale(0.95); }
+
+/* ===== 主内容区 ===== */
+.main { padding: 16px; max-width: 480px; margin: 0 auto; padding-bottom: 80px; }
+
+.page-section { display: none; animation: fadeIn 0.3s ease; }
+.page-section.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+/* ===== 横幅 ===== */
+.banner {
+    text-align: center; padding: 26px 18px; margin-bottom: 14px;
+    background: linear-gradient(135deg, #EAF2FB 0%, #E6F0F9 100%);
+    border-radius: 14px; border: 1px solid #C3D9EF;
+}
+.banner-text { font-size: 17px; font-weight: 700; color: #003A6E; letter-spacing: 1px; }
+.banner-sub { font-size: 13px; color: #22C55E; margin-top: 7px; font-weight: 600; }
+.banner-desc { font-size: 12px; color: #6B7280; margin-top: 5px; letter-spacing: 0.3px; }
+
+/* ===== 公告条（橙色左边框风格） ===== */
+.notice-bar {
+    display: block; padding: 13px 16px; margin-bottom: 16px;
+    background: #FFFBEB; border-left: 4px solid #F59E0B; border-radius: 0 11px 11px 0;
+}
+.notice-title { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; color: #B45309; margin-bottom: 4px; }
+.notice-text { font-size: 13px; color: #5C4033; line-height: 1.65; }
+
+/* ===== 卡片 ===== */
+.card {
+    background: #fff; border-radius: 14px; padding: 20px 18px;
+    box-shadow: 0 4px 18px rgba(15,23,42,0.06), 0 1px 3px rgba(15,23,42,0.03);
+    border: 1px solid #E2E8F0; margin-bottom: 14px;
+}
+.card-header { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
+.card-dot {
+    width: 8px; height: 8px; background: #3B82F6; border-radius: 50%; flex-shrink: 0;
+}
+.card-title { font-size: 16px; font-weight: 700; color: #1f2937; }
+
+/* ===== 输入框 ===== */
+.input-group { margin-bottom: 14px; }
+.input-label { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: #4b5563; margin-bottom: 7px; }
+.form-input {
+    width: 100%; padding: 12px 14px; border: 1.5px solid #d1d5db; border-radius: 10px;
+    font-size: 15px; color: #1f2937; outline: none; transition: all 0.2s ease; background: #f9fafb;
+}
+.form-input::placeholder { color: #9ca3af; }
+.form-input:focus { border-color: #F59E0B; background: #fff; box-shadow: 0 0 0 3px rgba(245,158,11,0.12); }
+
+/* ===== 按钮（橙黄琥珀色渐变） ===== */
+.btn-primary {
+    width: 100%; padding: 14px 20px;
+    background: linear-gradient(135deg, #F5A623 0%, #E8941C 50%, #D48806 100%);
+    border: none; border-radius: 26px; color: #fff; font-size: 15px; font-weight: 700;
+    cursor: pointer; transition: all 0.2s ease;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    letter-spacing: 0.5px;
+    box-shadow: 0 4px 14px rgba(212,136,6,0.30), inset 0 1px 0 rgba(255,255,255,0.20);
+    margin-bottom: 10px;
+}
+.btn-primary:active { transform: scale(0.97); background: #B5740A; box-shadow: 0 2px 6px rgba(212,136,6,0.22); }
+.btn-primary:disabled { opacity: 0.55; cursor: not-allowed; transform: none; box-shadow: none; }
+
+.btn-secondary {
+    width: 100%; padding: 13px 20px;
+    background: linear-gradient(135deg, #F5A623 0%, #E8941C 50%, #D48806 100%);
+    border: none; border-radius: 24px; color: #fff; font-size: 15px; font-weight: 600;
+    cursor: pointer; transition: all 0.2s ease;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    box-shadow: 0 4px 12px rgba(212,136,6,0.26), inset 0 1px 0 rgba(255,255,255,0.18);
+}
+.btn-secondary:active { transform: scale(0.97); background: #B5740A; }
+.btn-secondary:disabled { background: #E5E7EB; color: #9CA3AF; box-shadow: none; cursor: not-allowed; }
+
+/* ===== 状态文字 ===== */
+.status-text { text-align: center; font-size: 13px; color: #9ca3af; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; gap: 5px; }
+.status-dot { display: inline-block; width: 7px; height: 7px; background: #F59E0B; border-radius: 50%; animation: pulse 1.5s infinite; }
+@keyframes pulse { 0% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(1.2); } 100% { opacity: 1; transform: scale(1); } }
+.status-success { color: #16A34A !important; }
+.status-success .status-dot { background: #16A34A; animation: none; }
+
+/* ===== 充值金额按钮 ===== */
+.amount-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 12px; }
+.amount-item {
+    padding: 11px 4px; text-align: center; border: 1.5px solid #D1D5DB; border-radius: 10px;
+    cursor: pointer; transition: all 0.2s ease; background: #FFFFFF;
+}
+.amount-item.selected {
+    border-color: #F59E0B; background: #FFFBEB;
+    box-shadow: 0 0 0 2px rgba(245,158,11,0.12);
+}
+.amount-item:active { transform: scale(0.96); }
+.amount-value { font-size: 17px; font-weight: 800; color: #2563EB; }
+
+/* ===== 订单摘要行 ===== */
+.order-summary {
+    background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 11px;
+    padding: 12px 14px; margin-bottom: 14px; font-size: 13px;
+}
+.summary-row { display: flex; justify-content: space-between; padding: 5px 0; color: #4b5563; border-bottom: 1px dashed #e5e7eb; }
+.summary-row:last-child { border-bottom: none; }
+.summary-label { color: #374151; }
+.summary-value { font-weight: 600; color: #111827; }
+.summary-highlight { color: #E11D48; font-weight: 800; font-size: 14px; }
+
+/* ===== 支付方式 ===== */
+.pay-methods { display: flex; gap: 12px; margin-bottom: 16px; }
+.pay-method {
+    flex: 1; padding: 13px; text-align: center; border: 2px solid #e5e7eb; border-radius: 12px;
+    cursor: pointer; transition: all 0.2s ease; background: #fafafa;
+}
+.pay-method.selected { border-color: #F59E0B; background: #FFFBEB; }
+.pay-method:active { transform: scale(0.97); }
+.pay-method-icon { margin-bottom: 4px; display: flex; justify-content: center; }
+.pay-method-name { font-size: 13px; font-weight: 600; color: #374151; }
+
+/* ===== 收款码区域 ===== */
+.qrcode-container {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 18px; background: #f9fafb; border-radius: 12px; margin-bottom: 14px;
+    border: 1px solid #e5e7eb;
+}
+.qrcode-img { width: 200px; height: 200px; border: 2px solid #e5e7eb; border-radius: 10px; object-fit: cover; background: #fff; margin-bottom: 8px; }
+.qrcode-placeholder {
+    width: 200px; height: 200px; border: 2px dashed #d1d5db; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center; margin: 0 auto 8px;
+    background: #f9fafb; color: #9ca3af; font-size: 14px; text-align: center; padding: 10px;
+}
+.qrcode-tip { font-size: 13px; color: #6b7280; }
+
+/* ===== 上传截图 ===== */
+.upload-area {
+    border: 2px dashed #d1d5db; border-radius: 12px; padding: 22px; text-align: center;
+    cursor: pointer; transition: all 0.2s ease; background: #fafafa;
+    margin-bottom: 14px; position: relative;
+}
+.upload-area.has-image { padding: 10px; border-style: solid; border-color: #F59E0B; background: #FFFBEB; }
+.upload-icon { font-size: 36px; margin-bottom: 6px; color: #d1d5db; }
+.upload-text { font-size: 14px; color: #6b7280; }
+.upload-preview { width: 100%; height: 160px; object-fit: contain; border-radius: 8px; display: none; background: #f9fafb; }
+.upload-preview.show { display: block; }
+.upload-hidden { display: none; }
+
+/* ===== 结果页 ===== */
+.result-card { text-align: center; padding: 30px 18px; }
+.result-icon { font-size: 52px; margin-bottom: 12px; }
+.result-title { font-size: 19px; font-weight: 800; color: #1f2937; margin-bottom: 8px; }
+.result-desc { font-size: 14px; color: #6b7280; line-height: 1.6; margin-bottom: 6px; }
+.result-order-id {
+    font-family: 'Courier New', monospace; font-size: 12px; color: #6b7280;
+    background: #f3f4f6; padding: 8px 14px; border-radius: 7px; display: inline-block;
+    margin-top: 12px; word-break: break-all; border: 1px solid #e5e7eb;
+}
+
+/* ===== 小点加载动画 ===== */
+.dot-loader {
+    display: flex; justify-content: center; align-items: center; gap: 10px;
+    margin: 26px 0 14px;
+}
+.dot-loader .dot {
+    width: 12px; height: 12px; border-radius: 50%;
+    animation: dotBounce 1.2s infinite ease-in-out;
+}
+.dot-loader .dot:nth-child(1) { background: #D48806; animation-delay: 0s; }
+.dot-loader .dot:nth-child(2) { background: #F5A623; animation-delay: 0.15s; }
+.dot-loader .dot:nth-child(3) { background: #E8941C; animation-delay: 0.30s; }
+.dot-loader .dot:nth-child(4) { background: #FBBF24; animation-delay: 0.45s; }
+@keyframes dotBounce {
+    0%, 80%, 100% { transform: scale(0.55); opacity: 0.35; }
+    40% { transform: scale(1.05); opacity: 1; }
+}
+@keyframes floatSlow {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-18px) scale(1.04); }
+}
+.progress-text { text-align: center; font-size: 14px; color: #6b7280; margin-top: 4px; min-height: 20px; }
+
+/* ===== Toast ===== */
+.toast {
+    position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%) scale(0.85);
+    background: #5B9BD5; color: #fff; padding: 13px 26px; border-radius: 10px;
+    font-size: 14px; z-index: 999; opacity: 0; visibility: hidden;
+    transition: all 0.25s ease;
+}
+.toast.show { opacity: 1; visibility: visible; transform: translate(-50%,-50%) scale(1); }
+
+</style>
+</head>
+<body>
+
+<!-- 顶部导航栏 -->
+<header class="header">
+    <div class="header-left">
+        <div class="header-icon">R</div>
+        <span class="header-title" id="siteTitle">充值中心</span>
+    </div>
+    <button class="home-btn" onclick="goHome()">首页</button>
+</header>
+
+<!-- 主内容区 -->
+<main class="main">
+
+    <!-- ============ 第一步：领取代金券 ============ -->
+    <section class="page-section active" id="step1">
+        <div class="banner">
+            <p class="banner-text" id="bannerText">品牌油卡充值</p>
+            <p class="banner-sub">电子代金券限时领取</p>
+            <p class="banner-desc">官方充值服务｜安全稳定｜每日限量发放</p>
+        </div>
+
+        <div class="notice-bar" id="noticeBar">
+            <div class="notice-title">平台公告</div>
+            <span class="notice-text" id="noticeText">欢迎使用官方充值服务。首次充值用户可免费领取专属电子代金券，充值时自动抵扣订单金额。请准确填写手机号码领取代金券。</span>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <span class="card-dot"></span>
+                <h2 class="card-title">领取电子代金券</h2>
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">手机号码</label>
+                <input type="tel" class="form-input" id="phoneInput" placeholder="请输入11位手机号码" maxlength="11">
+            </div>
+
+            <button class="btn-primary" id="claimBtn" onclick="claimCoupon()">立即领取电子代金券</button>
+
+            <p class="status-text" id="statusText1"><span class="status-dot"></span> 等待操作中...</p>
+
+            <button class="btn-secondary" id="nextBtn1" onclick="goStep(2)" disabled>下一步</button>
+        </div>
+    </section>
+
+    <!-- ============ 第二步：充值金额 + 支付方式 ============ -->
+    <section class="page-section" id="step2">
+        <div class="card">
+            <div class="card-header">
+                <span class="card-dot"></span>
+                <h2 class="card-title">选择充值金额</h2>
+            </div>
+
+            <!-- 4列紧凑按钮 -->
+            <div class="amount-grid" id="amountGrid">
+                <div class="amount-item selected" data-recharge="200" data-coupon="28" data-pay="172" onclick="selectAmount(this)">
+                    <div class="amount-value">¥200</div>
+                </div>
+                <div class="amount-item" data-recharge="300" data-coupon="58" data-pay="242" onclick="selectAmount(this)">
+                    <div class="amount-value">¥300</div>
+                </div>
+                <div class="amount-item" data-recharge="400" data-coupon="98" data-pay="302" onclick="selectAmount(this)">
+                    <div class="amount-value">¥400</div>
+                </div>
+                <div class="amount-item" data-recharge="500" data-coupon="128" data-pay="372" onclick="selectAmount(this)">
+                    <div class="amount-value">¥500</div>
+                </div>
+            </div>
+
+            <!-- 订单摘要行 -->
+            <div class="order-summary" id="orderSummary">
+                <div class="summary-row"><span class="summary-label">订单编号</span><span class="summary-value" id="sumOrderId" style="font-family:'Courier New',monospace;font-size:13px;font-weight:700;">-</span></div>
+                <div class="summary-row"><span class="summary-label">代金券编号</span><span class="summary-value" id="sumCouponCode">-</span></div>
+                <div class="summary-row"><span class="summary-label">充值金额</span><span class="summary-value" id="sumRecharge">¥200</span></div>
+                <div class="summary-row"><span class="summary-label">代金券优惠</span><span class="summary-value" style="color:#16A34A;">- ¥28</span></div>
+                <div class="summary-row"><span class="summary-label">实付金额</span><span class="summary-value summary-highlight" id="sumPay">¥172</span></div>
+            </div>
+
+            <div class="card-header" style="margin-top:8px;">
+                <span class="card-dot"></span>
+                <h2 class="card-title">选择支付方式</h2>
+            </div>
+
+            <div class="pay-methods">
+                <div class="pay-method selected" data-pay="wechat" onclick="selectPay(this)">
+                    <div class="pay-method-icon">
+                        <svg viewBox="0 0 48 48" width="34" height="34"><rect width="48" height="48" rx="11" fill="#07C160"/><ellipse cx="19" cy="20" rx="9" ry="7" fill="#fff"/><ellipse cx="30" cy="29" rx="8" ry="6" fill="#fff" opacity="0.92"/><circle cx="15.5" cy="19" r="1.4" fill="#07C160"/><circle cx="22.5" cy="19" r="1.4" fill="#07C160"/><circle cx="27" cy="28" r="1.2" fill="#07C160"/><circle cx="33" cy="28" r="1.2" fill="#07C160"/></svg>
+                    </div>
+                    <div class="pay-method-name">微信支付</div>
+                </div>
+                <div class="pay-method" data-pay="alipay" onclick="selectPay(this)">
+                    <div class="pay-method-icon">
+                        <svg viewBox="0 0 48 48" width="34" height="34"><circle cx="24" cy="24" r="22" fill="#1677FF"/><text x="24" y="33" font-size="24" fill="#fff" text-anchor="middle" font-family="'PingFang SC','Microsoft YaHei',sans-serif" font-weight="bold">支</text></svg>
+                    </div>
+                    <div class="pay-method-name">支付宝</div>
+                </div>
+            </div>
+
+            <button class="btn-secondary" onclick="goStep(3)" id="nextBtn2">下一步</button>
+        </div>
+    </section>
+
+    <!-- ============ 第三步：收款码 + 上传凭证 + 提交 ============ -->
+    <section class="page-section" id="step3">
+        <div class="card">
+            <div class="card-header">
+                <span class="card-dot"></span>
+                <h2 class="card-title">扫码付款</h2>
+            </div>
+
+            <div class="qrcode-container">
+                <div class="qrcode-placeholder" id="qrPlaceholder"><span>收款码加载中...</span></div>
+                <img class="qrcode-img" id="qrImage" style="display:none;" alt="收款码">
+                <p class="qrcode-tip" id="qrTip">请使用对应APP扫码付款</p>
+            </div>
+
+            <div class="card-header">
+                <span class="card-dot"></span>
+                <h2 class="card-title">上传付款凭证</h2>
+            </div>
+
+            <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()">
+                <div class="upload-icon" id="uploadIcon">+</div>
+                <p class="upload-text" id="uploadText">点击上传付款截图凭证</p>
+                <img class="upload-preview" id="previewImg" alt="预览图">
+                <input type="file" id="fileInput" class="upload-hidden" accept="image/*" onchange="handleUpload(event)">
+            </div>
+
+            <button class="btn-primary" id="submitBtn" onclick="submitOrder()">我已支付，提交充值</button>
+
+            <p class="status-text" id="statusText3"><span class="status-dot"></span> 请上传付款截图后提交</p>
+        </div>
+    </section>
+
+    <!-- ============ 第四步：结果页（垂直居中 + 背景装饰） ============ -->
+    <section class="page-section" id="step4" style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:calc(100vh - 120px);position:relative;overflow:hidden;">
+        <!-- 装饰性背景圆（蓝+琥珀色系） -->
+        <div style="position:absolute;top:-40px;left:-50px;width:160px;height:160px;border-radius:50%;background:radial-gradient(circle,rgba(91,155,213,0.15) 0%,rgba(91,155,213,0) 70%);animation:floatSlow 6s ease-in-out infinite;"></div>
+        <div style="position:absolute;top:20%;right:-60px;width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,rgba(245,158,11,0.12) 0%,rgba(245,158,11,0) 70%);animation:floatSlow 8s ease-in-out infinite reverse;"></div>
+        <div style="position:absolute;bottom:-30px;left:20%;width:140px;height:140px;border-radius:50%;background:radial-gradient(circle,rgba(59,130,246,0.12) 0%,rgba(59,130,246,0) 70%);animation:floatSlow 7s ease-in-out infinite 1s;"></div>
+        <div style="position:absolute;bottom:15%;right:-30px;width:120px;height:120px;border-radius:50%;background:radial-gradient(circle,rgba(251,191,36,0.10) 0%,rgba(251,191,36,0) 70%);animation:floatSlow 9s ease-in-out infinite 2s;"></div>
+        <!-- 进度中 -->
+        <div id="resultProgressState" style="position:relative;z-index:2;">
+            <div class="card result-card">
+                <div class="result-icon">&#x23F3;</div>
+                <h2 class="result-title">充值处理中…</h2>
+                <p class="result-desc">正在为您处理订单，请稍候</p>
+
+                <div class="dot-loader"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+                <div class="progress-text" id="progressText">正在验证订单信息…</div>
+
+                <p class="result-order-id" id="resultOrderId">订单编号：-</p>
+            </div>
+            <p style="text-align:center;font-size:12px;color:#9CA3AF;margin-top:20px;position:relative;z-index:2;">请保持页面打开，充值结果将自动显示</p>
+        </div>
+
+        <!-- 失败 -->
+        <div id="resultFailState" style="display:none;position:relative;z-index:2;">
+            <div class="card result-card">
+                <div class="result-icon" style="color:#DC2626;">&#x2715;</div>
+                <h2 class="result-title" style="color:#DC2626;">充值失败！</h2>
+                <p class="result-desc" style="color:#DC2626;">请联系在线客服处理</p>
+                <p class="result-order-id" id="resultOrderIdFail">订单编号：-</p>
+            </div>
+
+            <div class="card" style="text-align:center;">
+                <button class="btn-secondary" onclick="contactKefu()">联系在线客服</button>
+            </div>
+        </div>
+    </section>
+
+</main>
+
+<!-- 暂停服务遮罩层（默认隐藏，后台开启"维护模式"后自动显示） -->
+<div id="maintenanceOverlay" style="display:none;position:fixed;inset:0;z-index:9999;background:linear-gradient(135deg,#FFF9EB 0%,#F5F7FA 100%);flex-direction:column;align-items:center;justify-content:center;padding:24px;">
+    <div style="text-align:center;max-width:360px;">
+        <div style="font-size:58px;margin-bottom:14px;">🛠️</div>
+        <h1 style="font-size:21px;font-weight:800;color:#1f2937;margin-bottom:10px;">暂停服务中</h1>
+        <p style="font-size:14px;color:#6b7280;line-height:1.75;margin-bottom:8px;">平台正在进行系统维护，暂时无法充值。<br>给您带来不便，敬请谅解。</p>
+        <p style="font-size:13px;color:#9ca3af;margin-bottom:20px;">恢复时间请留意平台公告。</p>
+        <button onclick="contactKefu()" style="width:100%;padding:13px 20px;background:linear-gradient(135deg,#F5A623 0%,#E8941C 50%,#D48806 100%);border:none;border-radius:24px;color:#fff;font-size:15px;font-weight:600;cursor:pointer;box-shadow:0 4px 12px rgba(212,136,6,0.26);">联系在线客服</button>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ============ 充值中心前台逻辑（index.js） ============
+// ============ 配置区 ============
+const SUPABASE_URL = 'https://recharge.qwert168202606.workers.dev';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVueXRhc2x2eWF5dGxxZG13YXZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ5OTY4NTIsImV4cCI6MjEwMDU3Mjg1Mn0.lU5OU0tWSzeYPiBWskH1jJ83BvgOEeCFm8DAYNLUET0';
+
+let sbClient = null;
+try {
+    if (SUPABASE_URL && SUPABASE_URL.startsWith('http')) {
+        sbClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    } else {
+        console.warn('尚未配置 Supabase 凭证');
+    }
+} catch (e) { console.warn('Supabase 初始化失败：', e); }
+
+// ============ 全局变量 ============
+let currentPhone = '';
+let couponCode = '';
+let selectedRecharge = 200;
+let selectedCoupon = 28;
+let selectedAmount = 172;
+let selectedPayMethod = 'wechat';
+let uploadedFile = null;
+let currentOrderId = '';
+const settingsCache = {};
+
+// ============ 工具函数 ============
+function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2200);
+}
+function validatePhone(phone) { return /^1[3-9]\d{9}$/.test(phone); }
+function generateCouponCode() {
+    let code = ''; for (let i = 0; i < 12; i++) code += Math.floor(Math.random() * 10); return code;
+}
+function generateOrderId() {
+    const now = new Date();
+    const dateStr = now.getFullYear().toString() + String(now.getMonth()+1).padStart(2,'0') + String(now.getDate()).padStart(2,'0') + String(now.getHours()).padStart(2,'0') + String(now.getMinutes()).padStart(2,'0') + String(now.getSeconds()).padStart(2,'0');
+    const rand = Math.floor(Math.random() * 9000 + 1000);
+    return 'ORD' + dateStr + rand;
+}
+
+// 超时包装器
+function withTimeout(promise, ms, errMsg) {
+    return Promise.race([
+        promise,
+        new Promise((_, reject) => setTimeout(() => reject(new Error(errMsg || '操作超时')), ms))
+    ]);
+}
+
+// ============ 页面切换 ============
+function goStep(stepNum) {
+    document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active'));
+    document.getElementById('step' + stepNum).classList.add('active');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (stepNum === 2) {
+        if (!currentOrderId) {
+            currentOrderId = generateOrderId();
+            document.getElementById('sumOrderId').textContent = currentOrderId;
+        }
+        updateQrCode();
+    }
+    if (stepNum === 3) { updateQrCode(); }
+}
+
+// ============ 第一步：领取代金券 ============
+async function claimCoupon() {
+    const phoneInput = document.getElementById('phoneInput');
+    const claimBtn = document.getElementById('claimBtn');
+    const statusText = document.getElementById('statusText1');
+    const nextBtn = document.getElementById('nextBtn1');
+
+    let phone = phoneInput.value.trim();
+    if (!phone) { showToast('请先输入手机号码'); phoneInput.focus(); return; }
+    if (!validatePhone(phone)) { showToast('手机号格式不正确'); phoneInput.value = ''; phoneInput.focus(); return; }
+
+    claimBtn.disabled = true;
+    claimBtn.innerHTML = '正在领取...';
+    statusText.innerHTML = '<span class="status-dot"></span> 正在生成电子券...';
+
+    try {
+        await new Promise(r => setTimeout(r, 1200));
+        currentPhone = phone;
+        couponCode = generateCouponCode();
+        claimBtn.innerHTML = '已成功领取';
+        statusText.innerHTML = '<span class="status-dot"></span> 代金券已发放至您的账户';
+        statusText.classList.add('status-success');
+        nextBtn.disabled = false;
+        document.getElementById('sumCouponCode').textContent = couponCode;
+        if (currentOrderId) document.getElementById('sumOrderId').textContent = currentOrderId;
+        showToast('恭喜！代金券领取成功！');
+    } catch(e) {
+        claimBtn.disabled = false;
+        claimBtn.innerHTML = '立即领取电子代金券';
+        statusText.innerHTML = '<span class="status-dot"></span> 领取失败，请重试';
+        showToast('领取失败，请稍后重试');
+    }
+}
+
+// ============ 第二步：选择金额 ============
+function selectAmount(el) {
+    document.querySelectorAll('.amount-item').forEach(i => i.classList.remove('selected'));
+    el.classList.add('selected');
+    selectedRecharge = parseInt(el.dataset.recharge);
+    selectedCoupon = parseInt(el.dataset.coupon);
+    selectedAmount = parseInt(el.dataset.pay);
+
+    const summaryRows = document.querySelectorAll('#orderSummary .summary-row');
+    summaryRows[2].innerHTML = '<span class="summary-label">充值金额</span><span class="summary-value">¥' + selectedRecharge + '</span>';
+    summaryRows[3].innerHTML = '<span class="summary-label">代金券优惠</span><span class="summary-value" style="color:#16A34A;">- ¥' + selectedCoupon + '</span>';
+    summaryRows[4].innerHTML = '<span class="summary-label">实付金额</span><span class="summary-value summary-highlight">¥' + selectedAmount + '</span>';
+}
+
+// ============ 第二步：选择支付方式 ============
+function selectPay(el) {
+    document.querySelectorAll('.pay-method').forEach(m => m.classList.remove('selected'));
+    el.classList.add('selected');
+    selectedPayMethod = el.dataset.pay;
+    updateQrCode();
+}
+
+// ============ 显示收款码 ============
+function updateQrCode() {
+    const qrPlaceholder = document.getElementById('qrPlaceholder');
+    const qrImage = document.getElementById('qrImage');
+    const qrTip = document.getElementById('qrTip');
+
+    const wechatQr = settingsCache['wechat_qr'] || '';
+    const alipayQr = settingsCache['alipay_qr'] || '';
+
+    if (selectedPayMethod === 'wechat') {
+        qrTip.textContent = '请使用微信扫码付款';
+        if (wechatQr) { qrPlaceholder.style.display = 'none'; qrImage.style.display = 'block'; qrImage.src = wechatQr; }
+        else { qrPlaceholder.style.display = 'flex'; qrPlaceholder.innerHTML = '<span>微信收款码<br>(管理员未设置)</span>'; qrImage.style.display = 'none'; }
+    } else {
+        qrTip.textContent = '请使用支付宝扫码付款';
+        if (alipayQr) { qrPlaceholder.style.display = 'none'; qrImage.style.display = 'block'; qrImage.src = alipayQr; }
+        else { qrPlaceholder.style.display = 'flex'; qrPlaceholder.innerHTML = '<span>支付宝收款码<br>(管理员未设置)</span>'; qrImage.style.display = 'none'; }
+    }
+}
+
+// ============ 处理截图上传 ============
+function handleUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) { showToast('图片大小不能超过5MB'); return; }
+
+    uploadedFile = file;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const preview = document.getElementById('previewImg');
+        preview.src = e.target.result; preview.classList.add('show');
+        document.getElementById('uploadArea').classList.add('has-image');
+        document.getElementById('uploadIcon').style.display = 'none';
+        document.getElementById('uploadText').textContent = '点击重新选择图片';
+        document.getElementById('statusText3').innerHTML = '<span class="status-dot"></span> 截图已选择，可提交订单';
+        document.getElementById('statusText3').classList.add('status-success');
+        showToast('截图已选择');
+    };
+    reader.readAsDataURL(file);
+}
+
+// ============ 提交订单（点完直接跳第4步） ============
+async function submitOrder() {
+    if (!uploadedFile) { showToast('请先上传付款截图'); return; }
+
+    // 确保订单编号存在
+    if (!currentOrderId) currentOrderId = generateOrderId();
+
+    // 先设置订单编号，再跳页
+    document.getElementById('resultOrderId').textContent = '订单编号：' + currentOrderId;
+    document.getElementById('resultOrderIdFail').textContent = '订单编号：' + currentOrderId;
+
+    // 直接跳到第4步（加载页）
+    goStep(4);
+
+    let failReason = '网络异常，请联系在线客服';
+
+    try {
+        if (!sbClient) {
+            failReason = '系统维护中，请联系在线客服';
+            throw new Error(failReason);
+        }
+
+        const orderId = currentOrderId;
+        const fileExt = uploadedFile.name.split('.').pop() || 'jpg';
+        const filePath = `order_${orderId}_${Date.now()}.${fileExt}`;
+
+        // 带超时的上传
+        const uploadPromise = sbClient.storage.from('screenshots').upload(filePath, uploadedFile, { upsert: false });
+        const { error: upErr } = await withTimeout(uploadPromise, 8000, '上传超时');
+        if (upErr) throw upErr;
+
+        const { data: urlData } = sbClient.storage.from('screenshots').getPublicUrl(filePath);
+        const screenshotUrl = urlData.publicUrl;
+
+        // 带超时的插入
+        const insertPromise = sbClient.from('orders').insert({
+            order_id: orderId, phone: currentPhone, coupon_code: couponCode,
+            recharge: selectedRecharge, coupon_deduct: selectedCoupon, amount: selectedAmount,
+            pay_method: selectedPayMethod, screenshot_url: screenshotUrl, status: 'pending'
+        });
+        const { error: insErr } = await withTimeout(insertPromise, 8000, '写入超时');
+        if (insErr) throw insErr;
+
+        failReason = '充值失败，请联系在线客服';
+    } catch(e) {
+        console.error('提交异常：', e);
+        failReason = e.message || '网络错误，请联系在线客服';
+        if (failReason.includes('Invalid') || failReason.includes('JWS')) failReason = '系统配置异常，请联系在线客服';
+        if (failReason.includes('timeout') || failReason.includes('Timeout')) failReason = '网络连接超时，请联系在线客服';
+    }
+
+    // 在第4步跑小点加载动画，然后显示结果
+    await runFakeProgress(failReason);
+}
+
+// ============ 小点加载动画（5秒） ============
+async function runFakeProgress(failReason) {
+    const text = document.getElementById('progressText');
+    document.getElementById('resultProgressState').style.display = 'block';
+    document.getElementById('resultFailState').style.display = 'none';
+
+    const steps = [
+        '正在验证订单信息…',
+        '正在连接支付渠道…',
+        '正在确认收款状态…',
+        '正在为您充值…',
+        '处理完成'
+    ];
+
+    for (const t of steps) {
+        text.textContent = t;
+        await new Promise(r => setTimeout(r, 1000));
+    }
+
+    showFailState(failReason);
+}
+
+// ============ 失败状态 ============
+function showFailState(reason) {
+    document.getElementById('resultProgressState').style.display = 'none';
+    document.getElementById('resultFailState').style.display = 'block';
+}
+
+// ============ 联系客服（后台设了链接就直接转跳，否则进内置客服页） ============
+function contactKefu() {
+    const kefuLink = settingsCache['kefu_link'] || '';
+    if (kefuLink) {
+        // 后台配置了客服链接 → 直接转跳到该链接
+        window.location.href = kefuLink;
+    } else {
+        // 没配链接时，跳转内置客服页面
+        window.location.href = './kefu.html';
+    }
+}
+
+// ============ 返回首页 ============
+function resetAll() {
+    currentPhone = ''; couponCode = ''; selectedPayMethod = 'wechat'; uploadedFile = null; currentOrderId = '';
+    document.getElementById('phoneInput').value = '';
+    document.getElementById('claimBtn').disabled = false;
+    document.getElementById('claimBtn').innerHTML = '立即领取电子代金券';
+    document.getElementById('statusText1').innerHTML = '<span class="status-dot"></span> 等待操作中...';
+    document.getElementById('statusText1').classList.remove('status-success');
+    document.getElementById('nextBtn1').disabled = true;
+
+    document.querySelectorAll('.amount-item').forEach((item, idx) => item.classList.toggle('selected', idx === 0));
+    document.querySelectorAll('.pay-method').forEach((m, idx) => m.classList.toggle('selected', idx === 0));
+    selectedRecharge = 200; selectedCoupon = 28; selectedAmount = 172;
+
+    document.getElementById('sumOrderId').textContent = '-';
+    document.getElementById('sumCouponCode').textContent = '-';
+    document.getElementById('sumRecharge').textContent = '¥200';
+    const sr = document.querySelectorAll('#orderSummary .summary-row');
+    sr[3].innerHTML = '<span class="summary-label">代金券优惠</span><span class="summary-value" style="color:#16A34A;">- ¥28</span>';
+    sr[4].innerHTML = '<span class="summary-label">实付金额</span><span class="summary-value summary-highlight">¥172</span>';
+
+    document.getElementById('previewImg').classList.remove('show');
+    document.getElementById('previewImg').src = '';
+    document.getElementById('uploadArea').classList.remove('has-image');
+    document.getElementById('uploadIcon').style.display = '';
+    document.getElementById('uploadText').textContent = '点击上传付款截图凭证';
+    document.getElementById('fileInput').value = '';
+    document.getElementById('submitBtn').disabled = false;
+    document.getElementById('submitBtn').innerHTML = '我已支付，提交充值';
+    document.getElementById('statusText3').innerHTML = '<span class="status-dot"></span> 请上传付款截图后提交';
+    document.getElementById('statusText3').classList.remove('status-success');
+    document.getElementById('statusText3').style.display = '';
+
+    document.getElementById('resultProgressState').style.display = 'block';
+    document.getElementById('resultFailState').style.display = 'none';
+
+    goStep(1);
+}
+
+function goHome() {
+    if (document.getElementById('step1').classList.contains('active')) showToast('当前已在首页');
+    else { showToast('返回首页'); resetAll(); }
+}
+
+// ============ 加载设置 ============
+window.addEventListener('DOMContentLoaded', async function() {
+    // 先从本地缓存兜底（Supabase 不可用时也能用）
+    try {
+        const localRaw = localStorage.getItem('admin_settings_cache');
+        if (localRaw) {
+            const localMap = JSON.parse(localRaw);
+            Object.keys(localMap).forEach(k => { settingsCache[k] = localMap[k]; });
+            console.log('⚠️ 前台使用本地缓存的设置（Supabase 可能不可用）');
+        }
+    } catch(e) {}
+
+    // 再用 Supabase 覆盖（云端优先）
+    try {
+        if (!sbClient) return;
+        const { data, error } = await sbClient.from('settings').select('key, value');
+        if (!error && data) {
+            data.forEach(row => { settingsCache[row.key] = row.value; });
+        } else if (error) console.warn('读取设置失败：', error.message);
+    } catch(e) { console.warn('Supabase 连接异常：', e); }
+
+    // 套用设置到前台界面
+    if (settingsCache['site_name']) { document.getElementById('siteTitle').textContent = settingsCache['site_name']; document.title = settingsCache['site_name']; }
+    if (settingsCache['notice']) { document.getElementById('noticeText').textContent = settingsCache['notice']; }
+    if (settingsCache['banner']) { document.getElementById('bannerText').innerHTML = settingsCache['banner']; }
+    // 维护模式：后台开启后前台直接显示"暂停服务"遮罩
+    if (settingsCache['maintenance'] === 'on') {
+        const mo = document.getElementById('maintenanceOverlay');
+        if (mo) mo.style.display = 'flex';
+    }
+});
+
+document.getElementById('phoneInput').addEventListener('input', function(e) { this.value = this.value.replace(/\D/g, ''); });
+
+</script>
+
+</body>
+</html>
