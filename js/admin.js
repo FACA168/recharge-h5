@@ -446,7 +446,11 @@ async function saveSettings() {
     }
 
     try {
-        const { error } = await sbClient.from('settings').upsert(rows, { onConflict: 'key' });
+        const { error } = await withTimeout(
+            sbClient.from('settings').upsert(rows, { onConflict: 'key' }),
+            8000,
+            '云端保存超时'
+        );
         if (error) throw error;
         showToast('✅ 所有设置已保存！前台将自动生效');
     } catch(e) {
