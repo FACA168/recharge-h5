@@ -288,33 +288,29 @@ function previewQr(input, previewId, textId) {
 
 // 加载设置
 async function loadSettings() {
-    try {
-        if (!sbClient) return; // 未配置凭证则不读取
-        const { data, error } = await sbClient.from('settings').select('key, value');
-        if (error) throw error;
-        const map = {};
-        (data || []).forEach(r => map[r.key] = r.value);
+    let map = null;
 
-        document.getElementById('setSiteName').value = map['site_name'] || '';
-        document.getElementById('setNotice').value = map['notice'] || '';
-        document.getElementById('setBanner').value = map['banner'] || '';
-        document.getElementById('setKefuName').value = map['kefu_name'] || '';
-        document.getElementById('setKefuLink').value = map['kefu_link'] || '';
-        document.getElementById('setMaintenance').value = map['maintenance'] || '';
-
-        if (map['wechat_qr']) {
-            const pw = document.getElementById('previewWechat');
-            pw.src = map['wechat_qr']; pw.classList.add('show');
-            document.getElementById('wechatUploadText').textContent = '✅ 已设置，点击可更换';
+    // 优先从 Supabase 读取
+    if (sbClient) {
+        try {
+            const { data, error } = await sbClient.from('settings').select('key, value');
+            if (!error && data) {
+                map = {};
+                data.forEach(r => { map[r.key] = r.value; });
+            }
+        } catch(e) {
+            console.warn('Supabase 读取设置失败，尝试本地缓存：', e);
         }
-        if (map['alipay_qr']) {
-            const pa = document.getElementById('previewAlipay');
-            pa.src = map['alipay_qr']; pa.classList.add('show');
-            document.getElementById('alipayUploadText').textContent = '✅ 已设置，点击可更换';
-        }
-    } catch(e) {
-        console.warn('读取设置失败：', e);
     }
+
+    // ★ Supabase 不可用或无数据时，从 localStorage 兜底读取
+    if (!map) {
+        map = loadFromLocal();
+        if (map) console.log('⚠️ 使用 localStorage 缓存的设置（Supabase 不可用）');
+    }
+
+    // 填入表单
+    fillSettingsToForm(map);
 }
 
 // 上传收款码到 Storage，返回公开 URL
@@ -328,70 +324,135 @@ async function uploadQr(file, prefix) {
 }
 
 // 保存所有设置
-async function saveSettings() {
+// ============ 收集当前表单所有设置值 ============
+function collectFormSettings() {
+    const wechatPreview = document.getElementById('previewWechat');
+    const alipayPreview = document.getElementById('previewAlipay');
+    let wechatUrl = wechatPreview ? wechatPreview.src : '';
+    let alipayUrl = alipayPreview ? alipayPreview.src : '';
+    if (!wechatUrl || !wechatUrl.startsWith('http')) wechatUrl = '';
+    if (!alipayUrl || !alipayUrl.startsWith('http')) alipayUrl = '';
+
+    const rows = [
+        { key: 'site_name',   value: document.getElementById('setSiteName').value.trim() },
+        { key: 'notice',      value: document.getElementById('setNotice').value.trim() },
+        { key: 'banner',      value: document.getElementById('setBanner').value.trim() },
+        { key: 'kefu_name',   value: document.getElementById('setKefuName').value.trim() },
+        { key: 'kefu_link',   value: document.getElementById('setKefuLink').value.trim() },
+        { key: 'wechat_qr',   value: wechatUrl },
+        { key: 'alipay_qr',   value: alipayUrl },
+        { key: 'maintenance', value: document.getElementById('setMaintenance').value }
+    ];
+    // 过滤空值
+    return rows.filter(r => r.value && r.value.length > 0);
+}
+
+// ============ 保存到 localStorage 兜底 ============
+function saveToLocal(rows) {
+    const map = {};
+    rows.forEach(r => { map[r.key] = r.value; });
+    localStorage.setItem('admin_settings_cache', JSON.stringify(map));
+}
+
+// ============ 从 localStorage 读取兜底 ============
+function loadFromLocal() {
     try {
-        if (!sbClient) {
-            showToast('⚠️ 尚未配置 Supabase，无法保存设置');
-            return;
+        const raw = localStorage.getItem('admin_settings_cache');
+        if (!raw) return null;
+        return JSON.parse(raw);
+    } catch(e) { return null; }
+}
+
+// ============ 将设置值填入表单 ============
+function fillSettingsToForm(map) {
+    if (!map) return;
+    const fields = [
+        ['setSiteName', 'site_name'], ['setNotice', 'notice'],
+        ['setBanner', 'banner'], ['setKefuName', 'kefu_name'],
+        ['setKefuLink', 'kefu_link'], ['setMaintenance', 'maintenance']
+    ];
+    fields.forEach(([id, key]) => {
+        const el = document.getElementById(id);
+        if (el && map[key] !== undefined) el.value = map[key];
+    });
+    // 收款码预览
+    if (map['wechat_qr']) {
+        const pw = document.getElementById('previewWechat');
+        if (pw) { pw.src = map['wechat_qr']; pw.classList.add('show'); }
+        const wt = document.getElementById('wechatUploadText');
+        if (wt) wt.textContent = '✅ 已设置，点击可更换';
+    }
+    if (map['alipay_qr']) {
+        const pa = document.getElementById('previewAlipay');
+        if (pa) { pa.src = map['alipay_qr']; pa.classList.add('show'); }
+        const at = document.getElementById('alipayUploadText');
+        if (at) at.textContent = '✅ 已设置，点击可更换';
+    }
+}
+
+async function saveSettings() {
+    // 先收集表单数据
+    const rows = collectFormSettings();
+    if (rows.length === 0) {
+        showToast('⚠️ 没有需要保存的设置内容');
+        return;
+    }
+
+    // ★ 无论 Supabase 是否可用，先存一份到 localStorage 兜底
+    saveToLocal(rows);
+
+    // 处理收款码图片上传
+    const wechatFile = document.getElementById('fileWechat') ? document.getElementById('fileWechat').files[0] : null;
+    const alipayFile = document.getElementById('fileAlipay') ? document.getElementById('fileAlipay').files[0] : null;
+
+    let wechatUrl = rows.find(r => r.key === 'wechat_qr') ? (rows.find(r => r.key === 'wechat_qr').value || '') : '';
+    let alipayUrl = rows.find(r => r.key === 'alipay_qr') ? (rows.find(r => r.key === 'alipay_qr').value || '') : '';
+
+    if (wechatFile) {
+        try { wechatUrl = await uploadQr(wechatFile, 'wechat'); } catch(e) {
+            console.warn('微信收款码上传失败：', e);
+            showToast('⚠️ 微信收款码上传失败，其他设置继续保存…');
         }
-
-        const wechatFile = document.getElementById('fileWechat').files[0];
-        const alipayFile = document.getElementById('fileAlipay').files[0];
-
-        let wechatUrl = document.getElementById('previewWechat').src;
-        let alipayUrl = document.getElementById('previewAlipay').src;
-
-        // 如果有新文件，逐个上传（单个失败不影响其他）
-        if (wechatFile) {
-            try { wechatUrl = await uploadQr(wechatFile, 'wechat'); } catch(e) {
-                console.warn('微信收款码上传失败：', e);
-                showToast('⚠️ 微信收款码上传失败，其他设置继续保存…');
-            }
+    }
+    if (alipayFile) {
+        try { alipayUrl = await uploadQr(alipayFile, 'alipay'); } catch(e) {
+            console.warn('支付宝收款码上传失败：', e);
+            showToast('⚠️ 支付宝收款码上传失败，其他设置继续保存…');
         }
-        if (alipayFile) {
-            try { alipayUrl = await uploadQr(alipayFile, 'alipay'); } catch(e) {
-                console.warn('支付宝收款码上传失败：', e);
-                showToast('⚠️ 支付宝收款码上传失败，其他设置继续保存…');
-            }
-        }
+    }
+    if (!wechatUrl || !wechatUrl.startsWith('http')) wechatUrl = '';
+    if (!alipayUrl || !alipayUrl.startsWith('http')) alipayUrl = '';
 
-        // 只保留真实的 http(s) URL
-        if (!wechatUrl || !wechatUrl.startsWith('http')) wechatUrl = '';
-        if (!alipayUrl || !alipayUrl.startsWith('http')) alipayUrl = '';
+    // 更新 rows 中的 URL
+    rows.forEach(r => { if (r.key === 'wechat_qr') r.value = wechatUrl; });
+    rows.forEach(r => { if (r.key === 'alipay_qr') r.value = alipayUrl; });
 
-        // 构建设置行，过滤掉值为空的（避免 No content provided 错误）
-        const allRows = [
-            { key: 'site_name',  value: document.getElementById('setSiteName').value.trim() },
-            { key: 'notice',     value: document.getElementById('setNotice').value.trim() },
-            { key: 'banner',     value: document.getElementById('setBanner').value.trim() },
-            { key: 'kefu_name',  value: document.getElementById('setKefuName').value.trim() },
-            { key: 'kefu_link',  value: document.getElementById('setKefuLink').value.trim() },
-            { key: 'wechat_qr',  value: wechatUrl },
-            { key: 'alipay_qr',  value: alipayUrl }
-        ];
-        // 只保留有值的行
-        const rows = allRows.filter(r => r.value && r.value.length > 0);
+    // 再次更新本地缓存（含上传后的 URL）
+    saveToLocal(rows);
 
-        // 维护模式开关：始终写入（确保关闭时能还原为正常营业）
-        rows.push({ key: 'maintenance', value: document.getElementById('setMaintenance').value });
+    // 尝试写入 Supabase
+    if (!sbClient) {
+        showToast('✅ 设置已保存到本地（Supabase 未配置）');
+        return;
+    }
 
-        if (rows.length === 0) {
-            showToast('⚠️ 没有需要保存的设置内容');
-            return;
-        }
-
+    try {
         const { error } = await sbClient.from('settings').upsert(rows, { onConflict: 'key' });
         if (error) throw error;
-
         showToast('✅ 所有设置已保存！前台将自动生效');
     } catch(e) {
-        console.error('保存失败：', e);
-        // 给用户友好的中文提示
+        console.error('Supabase 保存失败，已使用本地缓存：', e);
+        // Supabase 不可用时，localStorage 已经存好了，提示用户
         let msg = e.message || '未知错误';
-        if (msg.includes('No content')) msg = '部分设置项为空或格式异常';
-        if (msg.includes('permission') || msg.includes('RLS')) msg = '数据库权限异常，请检查 Supabase 配置';
-        if (msg.includes('storage') || msg.includes('bucket')) msg = '图片存储桶异常，请确认 screenshots 桶已创建';
-        showToast('❌ 保存失败：' + msg);
+        if (msg.includes('Failed to fetch') || msg.includes('NetworkError') || msg.includes('SSL_ERROR')) {
+            showToast('⚠️ Supabase 暂时不可用，设置已保存在本机浏览器中（换电脑/清缓存会丢失）。恢复后点"保存所有设置"即可同步。');
+        } else if (msg.includes('No content')) {
+            showToast('⚠️ 部分设置项为空或格式异常（已存本地）');
+        } else if (msg.includes('permission') || msg.includes('RLS')) {
+            showToast('❌ 数据库权限异常（已存本地）：' + msg);
+        } else {
+            showToast('⚠️ 云端保存失败，已使用本地缓存：' + msg);
+        }
     }
 }
 
