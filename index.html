@@ -3,619 +3,763 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>充值中心</title>
+    <title>充值中心 - 管理后台</title>
+    <!-- 引入 Supabase JS SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
+        /* ========== 全局重置 ========== */
         * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html, body { height: 100%; }
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
-            background: #f5f7fa;
-            color: #2d3748;
-            min-height: 100vh;
+            background-color: #f1f5f9;
+            color: #333;
+            /* ★ App 化：整体固定一屏高度，内容在中间滚动 */
+            display: flex;
+            flex-direction: column;
+            height: 100vh;   /* 兜底 */
+            height: 100dvh; /* 移动端动态视口高度，避免地址栏伸缩导致跳动 */
+            overflow: hidden;
         }
 
-        /* ===== 顶部导航栏 ===== */
+        /* ========== 顶部导航 ========== */
         .header {
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 15px 18px;
-            background: linear-gradient(135deg, #60A5FA 0%, #3B82F6 50%, #2563EB 100%);
-            position: sticky; top: 0; z-index: 100;
-            box-shadow: 0 4px 16px rgba(37,99,235,0.25), inset 0 1px 0 rgba(255,255,255,0.20);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            /* ★ 固定在顶部，不被压缩 */
+            flex-shrink: 0;
+            z-index: 100;
+            max-width: 520px;
+            width: 100%;
+            margin: 0 auto;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.2);
         }
-        .header-left { display: flex; align-items: center; gap: 10px; }
-        .header-icon {
-            width: 34px; height: 34px; background: rgba(255,255,255,0.20);
-            border-radius: 10px; display: flex; align-items: center; justify-content: center;
-            font-size: 17px; font-weight: 800; color: #fff;
+        .header-title { color: #fff; font-size: 18px; font-weight: 600; }
+        .header-btn {
+            padding: 7px 14px;
+            background: rgba(255,255,255,0.15);
+            border: none;
+            border-radius: 20px;
+            color: #fff;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s ease;
         }
-        .header-title { color: #fff; font-size: 19px; font-weight: 700; letter-spacing: 1px; }
-        .home-btn {
-            display: flex; align-items: center; gap: 4px; padding: 7px 15px;
-            background: rgba(255,255,255,0.20); border: none; border-radius: 20px;
-            color: #fff; font-size: 13px; cursor: pointer; transition: all 0.2s ease; font-weight: 500;
-        }
-        .home-btn:active { transform: scale(0.95); }
+        .header-btn:active { transform: scale(0.96); }
+        .header-btn.danger { background: rgba(239,68,68,0.6); }
 
-        /* ===== 主内容区 ===== */
-        .main { padding: 16px; max-width: 480px; margin: 0 auto; padding-bottom: 80px; }
-
+        /* ========== 主内容 ========== */
+        .main {
+            flex: 1 1 auto;
+            display: flex            flex            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            padding: 12px;
+            max-width: 520px;
+            width: 100%;
+            margin: 0 auto;
+        }
         .page-section { display: none; animation: fadeIn 0.3s ease; }
         .page-section.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        /* ★ 登录页占满内容区并居中 */
+        #loginPage.active { display: flex; flex-direction: column; }
+        @keyframes fadeIn { from { opacity:0; transform:translateY(10px);} to {opacity:1; transform:translateY(0);} }
 
-        /* ===== 横幅 ===== */
-        .banner {
-            text-align: center; padding: 26px 18px; margin-bottom: 14px;
-            background: linear-gradient(135deg, #EAF2FB 0%, #E6F0F9 100%);
-            border-radius: 14px; border: 1px solid #C3D9EF;
+        /* ========== 登录页 ========== */
+        .login-container {
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            flex: 1;            /* ★ 撑满内容区，登录框垂直居中 */
+            padding: 24px;
         }
-        .banner-text { font-size: 17px; font-weight: 700; color: #003A6E; letter-spacing: 1px; }
-        .banner-sub { font-size: 13px; color: #4B5563; margin-top: 7px; }
-        .banner-desc { font-size: 12px; color: #6B7280; margin-top: 5px; letter-spacing: 0.3px; }
-
-        /* ===== 公告条 ===== */
-        .notice-bar {
-            display: block; padding: 13px 16px; margin-bottom: 16px;
-            background: #FFF8E6; border: 1.5px solid #F4D35E; border-radius: 11px;
+        .login-logo { font-size: 46px; margin-bottom: 10px; }
+        .login-title { font-size: 20px; font-weight: 700; color: #1e293b; margin-bottom: 20px; }
+        .login-card {
+            width: 100%;
+            background: #fff; border-radius: 16px;
+            padding: 22px 18px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
         }
-        .notice-title { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; color: #8A5A00; margin-bottom: 4px; }
-        .notice-text { font-size: 13px; color: #5C4033; line-height: 1.65; }
+        .login-input {
+            width: 100%; padding: 14px 16px;
+            border: 1.5px solid #e2e8f0; border-radius: 10px;
+            font-size: 15px; outline: none; margin-bottom: 14px;
+        }
+        .login-input:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.12); }
+        .login-btn {
+            width: 100%; padding: 14px;
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            border: none; border-radius: 10px; color: #fff;
+            font-size: 16px; font-weight: 600; cursor: pointer;
+            letter-spacing: 2px; transition: all 0.25s ease;
+        }
+        .login-btn:active { transform: scale(0.98); }
+        .login-error { color: #ef4444; font-size: 13px; text-align: center; margin-top: 12px; display: none; }
 
-        /* ===== 卡片 ===== */
+        /* ========== 卡片 ========== */
         .card {
-            background: #fff; border-radius: 14px; padding: 20px 18px;
-            box-shadow: 0 4px 18px rgba(15,23,42,0.06), 0 1px 3px rgba(15,23,42,0.03);
-            border: 1px solid #E2E8F0; margin-bottom: 14px;
-        }
-        .card-header { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
-        .card-dot {
-            width: 8px; height: 8px; background: #10b981; border-radius: 50%; flex-shrink: 0;
-        }
-        .card-title { font-size: 16px; font-weight: 700; color: #1f2937; }
-
-        /* ===== 输入框 ===== */
-        .input-group { margin-bottom: 14px; }
-        .input-label { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: #4b5563; margin-bottom: 7px; }
-        .form-input {
-            width: 100%; padding: 12px 14px; border: 1.5px solid #d1d5db; border-radius: 10px;
-            font-size: 15px; color: #1f2937; outline: none; transition: all 0.2s ease; background: #f9fafb;
-        }
-        .form-input::placeholder { color: #9ca3af; }
-        .form-input:focus { border-color: #10B981; background: #fff; box-shadow: 0 0 0 3px rgba(16,185,129,0.12); }
-
-        /* ===== 按钮 ===== */
-        .btn-primary {
-            width: 100%; padding: 14px 20px;
-            background: linear-gradient(135deg, #34D399 0%, #10B981 50%, #059669 100%);
-            border: none; border-radius: 26px; color: #fff; font-size: 15px; font-weight: 700;
-            cursor: pointer; transition: all 0.2s ease;
-            display: flex; align-items: center; justify-content: center; gap: 6px;
-            letter-spacing: 0.5px;
-            box-shadow: 0 4px 14px rgba(5,150,105,0.30), inset 0 1px 0 rgba(255,255,255,0.20);
+            background: #fff; border-radius: 14px;
+            padding: 14px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);
             margin-bottom: 10px;
         }
-        .btn-primary:active { transform: scale(0.97); background: #047857; box-shadow: 0 2px 6px rgba(5,150,105,0.22); }
-        .btn-primary:disabled { opacity: 0.55; cursor: not-allowed; transform: none; box-shadow: none; }
-
-        .btn-secondary {
-            width: 100%; padding: 13px 20px;
-            background: linear-gradient(135deg, #34D399 0%, #10B981 50%, #059669 100%);
-            border: none; border-radius: 24px; color: #fff; font-size: 15px; font-weight: 600;
-            cursor: pointer; transition: all 0.2s ease;
-            display: flex; align-items: center; justify-content: center; gap: 6px;
-            box-shadow: 0 4px 12px rgba(5,150,105,0.26), inset 0 1px 0 rgba(255,255,255,0.18);
+        .card-header {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 14px;
         }
-        .btn-secondary:active { transform: scale(0.97); background: #047857; }
-        .btn-secondary:disabled { background: #E5E7EB; color: #9CA3AF; box-shadow: none; cursor: not-allowed; }
-
-        /* ===== 状态文字 ===== */
-        .status-text { text-align: center; font-size: 13px; color: #9ca3af; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; gap: 5px; }
-        .status-dot { display: inline-block; width: 7px; height: 7px; background: #F59E0B; border-radius: 50%; animation: pulse 1.5s infinite; }
-        @keyframes pulse { 0% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(1.2); } 100% { opacity: 1; transform: scale(1); } }
-        .status-success { color: #16A34A !important; }
-        .status-success .status-dot { background: #16A34A; animation: none; }
-
-        /* ===== 充值金额按钮 ===== */
-        .amount-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 12px; }
-        .amount-item {
-            padding: 11px 4px; text-align: center; border: 1.5px solid #D1D5DB; border-radius: 10px;
-            cursor: pointer; transition: all 0.2s ease; background: #FFFFFF;
-        }
-        .amount-item.selected {
-            border-color: #10B981; background: #ECFDF5;
-            box-shadow: 0 0 0 2px rgba(16,185,129,0.12);
-        }
-        .amount-item:active { transform: scale(0.96); }
-        .amount-value { font-size: 17px; font-weight: 800; color: #059669; }
-
-        /* ===== 订单摘要行 ===== */
-        .order-summary {
-            background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 11px;
-            padding: 12px 14px; margin-bottom: 14px; font-size: 13px;
-        }
-        .summary-row { display: flex; justify-content: space-between; padding: 5px 0; color: #4b5563; border-bottom: 1px dashed #e5e7eb; }
-        .summary-row:last-child { border-bottom: none; }
-        .summary-label { color: #374151; }
-        .summary-value { font-weight: 600; color: #111827; }
-        .summary-highlight { color: #E11D48; font-weight: 800; font-size: 14px; }
-
-        /* ===== 支付方式 ===== */
-        .pay-methods { display: flex; gap: 12px; margin-bottom: 16px; }
-        .pay-method {
-            flex: 1; padding: 13px; text-align: center; border: 2px solid #e5e7eb; border-radius: 12px;
-            cursor: pointer; transition: all 0.2s ease; background: #fafafa;
-        }
-        .pay-method.selected { border-color: #10b981; background: #ecfdf5; }
-        .pay-method:active { transform: scale(0.97); }
-        .pay-method-icon { margin-bottom: 4px; display: flex; justify-content: center; }
-        .pay-method-name { font-size: 13px; font-weight: 600; color: #374151; }
-
-        /* ===== 收款码区域 ===== */
-        .qrcode-container {
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            padding: 18px; background: #f9fafb; border-radius: 12px; margin-bottom: 14px;
-            border: 1px solid #e5e7eb;
-        }
-        .qrcode-img { width: 200px; height: 200px; border: 2px solid #e5e7eb; border-radius: 10px; object-fit: cover; background: #fff; margin-bottom: 8px; }
-        .qrcode-placeholder {
-            width: 200px; height: 200px; border: 2px dashed #d1d5db; border-radius: 10px;
-            display: flex; align-items: center; justify-content: center; margin: 0 auto 8px;
-            background: #f9fafb; color: #9ca3af; font-size: 14px; text-align: center; padding: 10px;
-        }
-        .qrcode-tip { font-size: 13px; color: #6b7280; }
-
-        /* ===== 上传截图 ===== */
-        .upload-area {
-            border: 2px dashed #d1d5db; border-radius: 12px; padding: 22px; text-align: center;
-            cursor: pointer; transition: all 0.2s ease; background: #fafafa;
-            margin-bottom: 14px; position: relative;
-        }
-        .upload-area.has-image { padding: 10px; border-style: solid; border-color: #10b981; background: #ecfdf5; }
-        .upload-icon { font-size: 36px; margin-bottom: 6px; color: #d1d5db; }
-        .upload-text { font-size: 14px; color: #6b7280; }
-        .upload-preview { width: 100%; height: 160px; object-fit: contain; border-radius: 8px; display: none; background: #f9fafb; }
-        .upload-preview.show { display: block; }
-        .upload-hidden { display: none; }
-
-        /* ===== 结果页 ===== */
-        .result-card { text-align: center; padding: 30px 18px; }
-        .result-icon { font-size: 52px; margin-bottom: 12px; }
-        .result-title { font-size: 19px; font-weight: 800; color: #1f2937; margin-bottom: 8px; }
-        .result-desc { font-size: 14px; color: #6b7280; line-height: 1.6; margin-bottom: 6px; }
-        .result-order-id {
-            font-family: 'Courier New', monospace; font-size: 12px; color: #6b7280;
-            background: #f3f4f6; padding: 8px 14px; border-radius: 7px; display: inline-block;
-            margin-top: 12px; word-break: break-all; border: 1px solid #e5e7eb;
+        .card-title { font-size: 16px; font-weight: 700; color: #1e293b; }
+        .card-badge {
+            font-size: 12px; padding: 3px 10px; border-radius: 20px;
+            background: #dbeafe; color: #2563eb; font-weight: 600;
         }
 
-        /* ===== 小点加载动画 ===== */
-        .dot-loader {
-            display: flex; justify-content: center; align-items: center; gap: 10px;
-            margin: 26px 0 14px;
+        /* ========== 搜索 ========== */
+        .search-box { display: flex; gap: 8px; margin-bottom: 12px; }
+        .search-input {
+            flex: 1; padding: 10px 13px;
+            border: 1.5px solid #e2e8f0; border-radius: 10px;
+            font-size: 14px; outline: none;
         }
-        .dot-loader .dot {
-            width: 12px; height: 12px; border-radius: 50%;
-            animation: dotBounce 1.2s infinite ease-in-out;
+        .search-input:focus { border-color: #3b82f6; }
+        .search-btn {
+            padding: 11px 18px; background: #3b82f6; border: none;
+            border-radius: 10px; color: #fff; font-size: 14px;
+            cursor: pointer; white-space: nowrap;
         }
-        .dot-loader .dot:nth-child(1) { background: #059669; animation-delay: 0s; }
-        .dot-loader .dot:nth-child(2) { background: #10B981; animation-delay: 0.15s; }
-        .dot-loader .dot:nth-child(3) { background: #34D399; animation-delay: 0.30s; }
-        .dot-loader .dot:nth-child(4) { background: #6EE7B7; animation-delay: 0.45s; }
-        @keyframes dotBounce {
-            0%, 80%, 100% { transform: scale(0.55); opacity: 0.35; }
-            40% { transform: scale(1.05); opacity: 1; }
-        }
-        @keyframes floatSlow {
-            0%, 100% { transform: translateY(0) scale(1); }
-            50% { transform: translateY(-18px) scale(1.04); }
-        }
-        .progress-text { text-align: center; font-size: 14px; color: #6b7280; margin-top: 4px; min-height: 20px; }
+        .search-btn:active { transform: scale(0.97); }
 
-        /* ===== Toast ===== */
+        /* ========== 订单列表 ========== */
+        .order-list { display: flex; flex-direction: column; gap: 8px; }
+        .order-item {
+            background: #f8fafc; border: 1px solid #e2e8f0;
+            border-radius: 12px; padding: 12px; cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .order-item:active { transform: scale(0.99); }
+        .order-top {
+            display: flex; justify-content: space-between;
+            align-items: center; margin-bottom: 8px;
+        }
+        .order-id {
+            font-family: 'Courier New', monospace; font-size: 12px;
+            color: #64748b; word-break: break-all; max-width: 65%;
+        }
+        .order-status {
+            font-size: 12px; padding: 3px 10px; border-radius: 20px;
+            font-weight: 600; white-space: nowrap;
+        }
+        .status-pending { background: #fef3c7; color: #b45309; }
+        .status-approved { background: #dcfce7; color: #15803d; }
+        .status-rejected { background: #fee2e2; color: #dc2626; }
+        .order-info-row {
+            display: flex; justify-content: space-between;
+            font-size: 13px; padding: 3px 0; color: #475569;
+        }
+        .order-info-label { color: #94a3b8; }
+        .order-info-value { font-weight: 600; }
+
+        .empty-state { text-align: center; padding: 32px 20px; color: #94a3b8; }
+        .empty-icon { font-size: 40px; margin-bottom: 8px; }
+
+        /* ========== 详情弹窗 ========== */
+        .modal-overlay {
+            position: fixed; top:0; left:0; right:0; bottom:0;
+            background: rgba(0,0,0,0.5); z-index: 200;
+            display: none; align-items: flex-end; justify-content: center;
+        }
+        .modal-overlay.show { display: flex; }
+        .modal-content {
+            background: #fff; border-radius: 20px 20px 0 0;
+            width: 100%; max-width: 520px; max-height: 85vh;
+            overflow-y: auto; padding: 24px 20px; animation: slideUp 0.3s ease;
+        }
+        @keyframes slideUp { from { transform: translateY(100%);} to { transform: translateY(0);} }
+        .modal-handle { width: 36px; height: 4px; background: #cbd5e1; border-radius: 2px; margin: 0 auto 18px; }
+        .modal-title { font-size: 18px; font-weight: 700; color: #1e293b; margin-bottom: 18px; text-align: center; }
+        .detail-row {
+            display: flex; justify-content: space-between;
+            padding: 10px 0; border-bottom: 1px solid #f1f5f9; font-size: 14px;
+        }
+        .detail-label { color: #64748b; }
+        .detail-value { font-weight: 600; text-align: right; max-width: 60%; word-break: break-all; }
+        .detail-screenshot { width: 100%; border-radius: 10px; margin-top: 10px; border: 1px solid #e2e8f0; }
+        .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
+        .action-btn {
+            flex: 1; padding: 13px; border: none; border-radius: 10px;
+            font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.2s ease;
+        }
+        .action-btn:active { transform: scale(0.97); }
+        .btn-approve { background: #22c55e; color: #fff; }
+        .btn-reject { background: #ef4444; color: #fff; }
+        .btn-close-modal { background: #e2e8f0; color: #475569; }
+
+        /* ========== 设置表单 ========== */
+        .setting-group { margin-bottom: 16px; }
+        .setting-label {
+            font-size: 14px; font-weight: 600; color: #334155;
+            margin-bottom: 8px; display: flex; align-items: center; gap: 6px;
+        }
+        .setting-input {
+            width: 100%; padding: 12px 14px;
+            border: 1.5px solid #e2e8f0; border-radius: 10px;
+            font-size: 14px; outline: none; transition: all 0.25s ease;
+        }
+        .setting-input:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.12); }
+        .setting-textarea {
+            width: 100%; padding: 12px 14px;
+            border: 1.5px solid #e2e8f0; border-radius: 10px;
+            font-size: 14px; outline: none; resize: vertical;
+            min-height: 80px; font-family: inherit;
+        }
+        .setting-textarea:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.12); }
+        .qr-upload-area {
+            border: 2px dashed #cbd5e1; border-radius: 12px;
+            padding: 20px; text-align: center; cursor: pointer;
+            transition: all 0.25s ease; background: #fafbfc; margin-bottom: 8px;
+        }
+        .qr-upload-area:hover { border-color: #3b82f6; }
+        .qr-preview-img { max-width: 160px; max-height: 160px; border-radius: 8px; margin-top: 8px; display: none; }
+        .qr-preview-img.show { display: inline-block; }
+        .save-btn {
+            width: 100%; padding: 14px; margin-top: 8px;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            border: none; border-radius: 12px; color: #fff;
+            font-size: 16px; font-weight: 600; cursor: pointer; letter-spacing: 2px;
+        }
+        .save-btn:active { transform: scale(0.98); }
+
+        /* ========== 底部导航 ========== */
+        .tab-bar {
+            /* ★ 改为 flex 底部固定，不再用 fixed 浮层，避免遮挡内容 */
+            flex-shrink: 0;
+            background: #fff; display: flex; border-top: 1px solid #e2e8f0;
+            z-index: 99; max-width: 520px; width: 100%; margin: 0 auto;
+            padding-bottom: env(safe-area-inset-bottom); /* iPhone 底部安全区 */
+        }
+        .tab-item {
+            flex: 1; padding: 10px 4px 8px; text-align: center;
+            cursor: pointer; border: none; background: none; transition: all 0.2s ease;
+        }
+        .tab-item.active { color: #3b82f6; }
+        .tab-item:not(.active) { color: #94a3b8; }
+        .tab-icon { font-size: 22px; display: block; }
+        .tab-name { font-size: 11px; margin-top: 2px; display: block; }
+        .has-tabbar { padding-bottom: 8px; } /* 底部栏已在 flex 流中，无需额外留白 */
+
+        /* ========== Toast ========== */
         .toast {
-            position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%) scale(0.85);
-            background: #2563EB; color: #fff; padding: 13px 26px; border-radius: 10px;
-            font-size: 14px; z-index: 999; opacity: 0; visibility: hidden;
-            transition: all 0.25s ease;
+            position: fixed; top: 50%; left: 50%;
+            transform: translate(-50%,-50%) scale(0.8);
+            background: rgba(0,0,0,0.75); color: #fff;
+            padding: 14px 26px; border-radius: 10px; font-size: 14px;
+            z-index: 999; opacity: 0; visibility: hidden;
+            transition: all 0.3s ease; backdrop-filter: blur(4px);
         }
         .toast.show { opacity: 1; visibility: visible; transform: translate(-50%,-50%) scale(1); }
+
+        /* ========== 统计卡片 ========== */
+        .stats-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-bottom: 12px; }
+        .stat-card {
+            background: #fff; border-radius: 12px; padding: 12px 8px;
+            text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+        .stat-num { font-size: 22px; font-weight: 800; color: #1e293b; }
+        .stat-label { font-size: 11px; color: #64748b; margin-top: 4px; }
     </style>
 </head>
 <body>
 
-<!-- 顶部导航栏 -->
-<header class="header">
-    <div class="header-left">
-        <div class="header-icon">R</div>
-        <span class="header-title" id="siteTitle">充值中心</span>
-    </div>
-    <button class="home-btn" onclick="goHome()">首页</button>
+<!-- ===== 顶部导航 ===== -->
+<header class="header" id="adminHeader" style="display:none;">
+    <span class="header-title">🛡️ 管理后台</span>
+    <button class="header-btn danger" onclick="logout()">退出登录</button>
 </header>
 
-<!-- 主内容区 -->
+<!-- ===== 主内容 ===== -->
 <main class="main">
 
-    <!-- ============ 第一步：领取代金券 ============ -->
-    <section class="page-section active" id="step1">
-        <div class="banner">
-            <p class="banner-text" id="bannerText">品牌油卡充值</p>
-            <p class="banner-sub">电子代金券限时领取</p>
-            <p class="banner-desc">官方充值服务｜安全稳定｜每日限量发放</p>
-        </div>
-
-        <div class="notice-bar" id="noticeBar">
-            <div class="notice-title">平台公告</div>
-            <span class="notice-text" id="noticeText">欢迎使用官方充值服务。首次充值用户可免费领取专属电子代金券，充值时自动抵扣订单金额。请准确填写手机号码领取代金券。</span>
-        </div>
-
-        <div class="card">
-            <div class="card-header">
-                <span class="card-dot"></span>
-                <h2 class="card-title">领取电子代金券</h2>
+    <!-- ==================== 登录页 ==================== -->
+    <section class="page-section active" id="loginPage">
+        <div class="login-container">
+            <div class="login-logo">🛡️</div>
+            <h1 class="login-title">管理员登录</h1>
+            <div class="login-card">
+                <input type="text" class="login-input" id="loginUser" placeholder="管理员账号" autocomplete="username">
+                <input type="password" class="login-input" id="loginPass" placeholder="登录密码" autocomplete="current-password">
+                <button class="login-btn" onclick="doLogin()">登 录</button>
+                <p class="login-error" id="loginError">账号或密码错误！</p>
+                <p style="text-align:center;font-size:12px;color:#94a3b8;margin-top:16px;">
+                    默认账号：admin   密码：admin123
+                </p>
             </div>
-
-            <div class="input-group">
-                <label class="input-label">手机号码</label>
-                <input type="tel" class="form-input" id="phoneInput" placeholder="请输入11位手机号码" maxlength="11">
-            </div>
-
-            <button class="btn-primary" id="claimBtn" onclick="claimCoupon()">立即领取电子代金券</button>
-
-            <p class="status-text" id="statusText1"><span class="status-dot"></span> 等待操作中...</p>
-
-            <button class="btn-secondary" id="nextBtn1" onclick="goStep(2)" disabled>下一步</button>
         </div>
     </section>
 
-    <!-- ============ 第二步：充值金额 + 支付方式 ============ -->
-    <section class="page-section" id="step2">
-        <div class="card">
-            <div class="card-header">
-                <span class="card-dot"></span>
-                <h2 class="card-title">选择充值金额</h2>
+    <!-- ==================== 后台主页 ==================== -->
+    <div id="dashboardArea" style="display:none;">
+
+        <!-- 订单管理 Tab -->
+        <section class="page-section active has-tabbar" id="tabOrders">
+            <div class="stats-grid">
+                <div class="stat-card"><div class="stat-num" id="statTotal">0</div><div class="stat-label">总订单</div></div>
+                <div class="stat-card"><div class="stat-num" id="statPending" style="color:#d97706;">0</div><div class="stat-label">待审核</div></div>
+                <div class="stat-card"><div class="stat-num" id="statApproved" style="color:#16a34a;">0</div><div class="stat-label">已通过</div></div>
             </div>
 
-            <!-- 4列紧凑按钮 -->
-            <div class="amount-grid" id="amountGrid">
-                <div class="amount-item selected" data-recharge="200" data-coupon="28" data-pay="172" onclick="selectAmount(this)">
-                    <div class="amount-value">¥200</div>
-                </div>
-                <div class="amount-item" data-recharge="300" data-coupon="58" data-pay="242" onclick="selectAmount(this)">
-                    <div class="amount-value">¥300</div>
-                </div>
-                <div class="amount-item" data-recharge="400" data-coupon="98" data-pay="302" onclick="selectAmount(this)">
-                    <div class="amount-value">¥400</div>
-                </div>
-                <div class="amount-item" data-recharge="500" data-coupon="128" data-pay="372" onclick="selectAmount(this)">
-                    <div class="amount-value">¥500</div>
-                </div>
+            <div class="search-box">
+                <input type="text" class="search-input" id="searchInput" placeholder="搜索手机号/订单号/代金券...">
+                <button class="search-btn" onclick="searchOrders()">🔍 搜索</button>
             </div>
 
-            <!-- 订单摘要行 -->
-            <div class="order-summary" id="orderSummary">
-                <div class="summary-row"><span class="summary-label">订单编号</span><span class="summary-value" id="sumOrderId" style="font-family:'Courier New',monospace;font-size:13px;font-weight:700;">-</span></div>
-                <div class="summary-row"><span class="summary-label">代金券编号</span><span class="summary-value" id="sumCouponCode">-</span></div>
-                <div class="summary-row"><span class="summary-label">充值金额</span><span class="summary-value" id="sumRecharge">¥200</span></div>
-                <div class="summary-row"><span class="summary-label">代金券优惠</span><span class="summary-value" style="color:#16A34A;">- ¥28</span></div>
-                <div class="summary-row"><span class="summary-label">实付金额</span><span class="summary-value summary-highlight" id="sumPay">¥172</span></div>
-            </div>
-
-            <div class="card-header" style="margin-top:8px;">
-                <span class="card-dot"></span>
-                <h2 class="card-title">选择支付方式</h2>
-            </div>
-
-            <div class="pay-methods">
-                <div class="pay-method selected" data-pay="wechat" onclick="selectPay(this)">
-                    <div class="pay-method-icon">
-                        <svg viewBox="0 0 48 48" width="34" height="34"><rect width="48" height="48" rx="11" fill="#07C160"/><ellipse cx="19" cy="20" rx="9" ry="7" fill="#fff"/><ellipse cx="30" cy="29" rx="8" ry="6" fill="#fff" opacity="0.92"/><circle cx="15.5" cy="19" r="1.4" fill="#07C160"/><circle cx="22.5" cy="19" r="1.4" fill="#07C160"/><circle cx="27" cy="28" r="1.2" fill="#07C160"/><circle cx="33" cy="28" r="1.2" fill="#07C160"/></svg>
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">📋 订单列表</h2>
+                    <span class="card-badge" id="orderCount">0 条</span>
+                </div>
+                <div class="order-list" id="orderList">
+                    <div class="empty-state">
+                        <div class="empty-icon">📭</div>
+                        <p>加载中...</p>
                     </div>
-                    <div class="pay-method-name">微信支付</div>
                 </div>
-                <div class="pay-method" data-pay="alipay" onclick="selectPay(this)">
-                    <div class="pay-method-icon">
-                        <svg viewBox="0 0 48 48" width="34" height="34"><circle cx="24" cy="24" r="22" fill="#1677FF"/><text x="24" y="33" font-size="24" fill="#fff" text-anchor="middle" font-family="'PingFang SC','Microsoft YaHei',sans-serif" font-weight="bold">支</text></svg>
+            </div>
+        </section>
+
+        <!-- 系统设置 Tab -->
+        <section class="page-section has-tabbar" id="tabSettings">
+            <div class="card">
+                <div class="card-header"><h2 class="card-title">⚙️ 系统设置</h2></div>
+
+                <div class="setting-group" style="background:#FFF7ED;border:1.5px solid #FDBA74;border-radius:12px;padding:12px;">
+                    <label class="setting-label">🚦 暂停访问（维护模式）</label>
+                    <select class="setting-input" id="setMaintenance">
+                        <option value="">正常营业（用户可正常充值）</option>
+                        <option value="on">暂停访问（前台显示维护页）</option>
+                    </select>
+                    <p style="font-size:12px;color:#9a3412;margin-top:6px;">开启后，所有用户打开前台都会看到“暂停服务中”，无法充值。需要时再改回“正常营业”即可恢复。</p>
+                </div>
+
+                <div class="setting-group">
+                    <label class="setting-label">🏷️ 网站名称</label>
+                    <input type="text" class="setting-input" id="setSiteName" placeholder="例如：充值中心">
+                </div>
+                <div class="setting-group">
+                    <label class="setting-label">📢 首页公告</label>
+                    <textarea class="setting-textarea" id="setNotice" placeholder="输入首页公告文字..."></textarea>
+                </div>
+                <div class="setting-group">
+                    <label class="setting-label">🎉 Banner文案</label>
+                    <input type="text" class="setting-input" id="setBanner" placeholder="例如：🎉 品牌充值 · 代金券限时领">
+                </div>
+                <div class="setting-group">
+                    <label class="setting-label">💚 微信收款码</label>
+                    <div class="qr-upload-area" onclick="document.getElementById('fileWechat').click()">
+                        <span style="font-size:32px;">📷</span>
+                        <p style="font-size:13px;color:#64748b;margin-top:4px;" id="wechatUploadText">点击上传微信收款码图片</p>
+                        <img class="qr-preview-img" id="previewWechat" alt="微信收款码预览">
+                        <input type="file" id="fileWechat" style="display:none;" accept="image/*"
+                            onchange="previewQr(this,'previewWechat','wechatUploadText')">
                     </div>
-                    <div class="pay-method-name">支付宝</div>
                 </div>
+                <div class="setting-group">
+                    <label class="setting-label">💙 支付宝收款码</label>
+                    <div class="qr-upload-area" onclick="document.getElementById('fileAlipay').click()">
+                        <span style="font-size:32px;">📷</span>
+                        <p style="font-size:13px;color:#64748b;margin-top:4px;" id="alipayUploadText">点击上传支付宝收款码图片</p>
+                        <img class="qr-preview-img" id="previewAlipay" alt="支付宝收款码预览">
+                        <input type="file" id="fileAlipay" style="display:none;" accept="image/*"
+                            onchange="previewQr(this,'previewAlipay','alipayUploadText')">
+                    </div>
+                </div>
+                <div class="setting-group">
+                    <label class="setting-label">💬 客服名称</label>
+                    <input type="text" class="setting-input" id="setKefuName" placeholder="例如：在线客服小助手">
+                </div>
+                <div class="setting-group">
+                    <label class="setting-label">🔗 客服链接</label>
+                    <input type="text" class="setting-input" id="setKefuLink" placeholder="客服微信/QQ等联系链接">
+                </div>
+                <button class="save-btn" onclick="saveSettings()">💾 保存所有设置</button>
             </div>
 
-            <button class="btn-secondary" onclick="goStep(3)" id="nextBtn2">下一步</button>
-        </div>
-    </section>
-
-    <!-- ============ 第三步：收款码 + 上传凭证 + 提交 ============ -->
-    <section class="page-section" id="step3">
-        <div class="card">
-            <div class="card-header">
-                <span class="card-dot"></span>
-                <h2 class="card-title">扫码付款</h2>
+            <div class="card">
+                <div class="card-header"><h2 class="card-title">🔐 修改管理员密码</h2></div>
+                <div class="setting-group">
+                    <label class="setting-label">当前密码</label>
+                    <input type="password" class="setting-input" id="oldPass" placeholder="输入当前密码">
+                </div>
+                <div class="setting-group">
+                    <label class="setting-label">新密码</label>
+                    <input type="password" class="setting-input" id="newPass" placeholder="输入新密码">
+                </div>
+                <div class="setting-group">
+                    <label class="setting-label">确认新密码</label>
+                    <input type="password" class="setting-input" id="confirmPass" placeholder="再次输入新密码">
+                </div>
+                <button class="save-btn" style="background:linear-gradient(135deg,#6366f1,#4f46e5);" onclick="changePassword()">
+                    🔑 修改密码
+                </button>
             </div>
-
-            <div class="qrcode-container">
-                <div class="qrcode-placeholder" id="qrPlaceholder"><span>收款码加载中...</span></div>
-                <img class="qrcode-img" id="qrImage" style="display:none;" alt="收款码">
-                <p class="qrcode-tip" id="qrTip">请使用对应APP扫码付款</p>
-            </div>
-
-            <div class="card-header">
-                <span class="card-dot"></span>
-                <h2 class="card-title">上传付款凭证</h2>
-            </div>
-
-            <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()">
-                <div class="upload-icon" id="uploadIcon">+</div>
-                <p class="upload-text" id="uploadText">点击上传付款截图凭证</p>
-                <img class="upload-preview" id="previewImg" alt="预览图">
-                <input type="file" id="fileInput" class="upload-hidden" accept="image/*" onchange="handleUpload(event)">
-            </div>
-
-            <button class="btn-primary" id="submitBtn" onclick="submitOrder()">我已支付，提交充值</button>
-
-            <p class="status-text" id="statusText3"><span class="status-dot"></span> 请上传付款截图后提交</p>
-        </div>
-    </section>
-
-    <!-- ============ 第四步：结果页（垂直居中 + 背景装饰） ============ -->
-    <section class="page-section" id="step4" style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:calc(100vh - 120px);position:relative;overflow:hidden;">
-        <!-- 装饰性背景圆 -->
-        <div style="position:absolute;top:-40px;left:-50px;width:160px;height:160px;border-radius:50%;background:radial-gradient(circle,rgba(96,165,250,0.15) 0%,rgba(96,165,250,0) 70%);animation:floatSlow 6s ease-in-out infinite;"></div>
-        <div style="position:absolute;top:20%;right:-60px;width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,rgba(16,185,129,0.12) 0%,rgba(16,185,129,0) 70%);animation:floatSlow 8s ease-in-out infinite reverse;"></div>
-        <div style="position:absolute;bottom:-30px;left:20%;width:140px;height:140px;border-radius:50%;background:radial-gradient(circle,rgba(59,130,246,0.12) 0%,rgba(59,130,246,0) 70%);animation:floatSlow 7s ease-in-out infinite 1s;"></div>
-        <div style="position:absolute;bottom:15%;right:-30px;width:120px;height:120px;border-radius:50%;background:radial-gradient(circle,rgba(52,211,153,0.10) 0%,rgba(52,211,153,0) 70%);animation:floatSlow 9s ease-in-out infinite 2s;"></div>
-        <!-- 进度中 -->
-        <div id="resultProgressState" style="position:relative;z-index:2;">
-            <div class="card result-card">
-                <div class="result-icon">⏳</div>
-                <h2 class="result-title">充值处理中…</h2>
-                <p class="result-desc">正在为您处理订单，请稍候</p>
-
-                <div class="dot-loader"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
-                <div class="progress-text" id="progressText">正在验证订单信息…</div>
-
-                <p class="result-order-id" id="resultOrderId">订单编号：-</p>
-            </div>
-            <p style="text-align:center;font-size:12px;color:#9CA3AF;margin-top:20px;position:relative;z-index:2;">请保持页面打开，充值结果将自动显示</p>
-        </div>
-
-        <!-- 失败 -->
-        <div id="resultFailState" style="display:none;position:relative;z-index:2;">
-            <div class="card result-card">
-                <div class="result-icon" style="color:#DC2626;">✕</div>
-                <h2 class="result-title" style="color:#DC2626;">充值失败！</h2>
-                <p class="result-desc" style="color:#DC2626;">请联系在线客服处理</p>
-                <p class="result-order-id" id="resultOrderIdFail">订单编号：-</p>
-            </div>
-
-            <div class="card" style="text-align:center;">
-                <button class="btn-secondary" onclick="contactKefu()">联系在线客服</button>
-            </div>
-        </div>
-    </section>
+        </section>
+    </div>
 
 </main>
 
-<!-- 暂停服务遮罩层（默认隐藏，后台开启“维护模式”后自动显示） -->
-<div id="maintenanceOverlay" style="display:none;position:fixed;inset:0;z-index:9999;background:linear-gradient(135deg,#EFF6FF 0%,#F5F7FA 100%);flex-direction:column;align-items:center;justify-content:center;padding:24px;">
-    <div style="text-align:center;max-width:360px;">
-        <div style="font-size:58px;margin-bottom:14px;">🛠️</div>
-        <h1 style="font-size:21px;font-weight:800;color:#1f2937;margin-bottom:10px;">暂停服务中</h1>
-        <p style="font-size:14px;color:#6b7280;line-height:1.75;margin-bottom:8px;">平台正在进行系统维护，暂时无法充值。<br>给您带来不便，敬请谅解。</p>
-        <p style="font-size:13px;color:#9ca3af;margin-bottom:20px;">恢复时间请留意平台公告。</p>
-        <button onclick="contactKefu()" style="width:100%;padding:13px 20px;background:linear-gradient(135deg,#60A5FA 0%,#3B82F6 50%,#2563EB 100%);border:none;border-radius:24px;color:#fff;font-size:15px;font-weight:600;cursor:pointer;box-shadow:0 4px 12px rgba(37,99,235,0.26);">联系在线客服</button>
+<!-- ===== 底部导航 ===== -->
+<nav class="tab-bar" id="tabBar" style="display:none;">
+    <button class="tab-item active" onclick="switchTab('orders')">
+        <span class="tab-icon">📋</span><span class="tab-name">订单管理</span>
+    </button>
+    <button class="tab-item" onclick="switchTab('settings')">
+        <span class="tab-icon">⚙️</span><span class="tab-name">系统设置</span>
+    </button>
+</nav>
+
+<!-- ===== 订单详情弹窗 ===== -->
+<div class="modal-overlay" id="orderModal">
+    <div class="modal-content">
+        <div class="modal-handle"></div>
+        <h3 class="modal-title">订单详情</h3>
+        <div id="modalDetailBody"></div>
+        <div class="modal-actions" id="modalActions"></div>
     </div>
 </div>
 
+<!-- Toast -->
 <div class="toast" id="toast"></div>
 
 <script>
-// ============ 配置区 ============
+// ============================================================
+//  ⚠️ 配置区：请填入与 index.html 相同的 Supabase 信息
+// ============================================================
 const SUPABASE_URL = 'https://recharge.qwert168202606.workers.dev';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVueXRhc2x2eWF5dGxxZG13YXZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ5OTY4NTIsImV4cCI6MjEwMDU3Mjg1Mn0.lU5OU0tWSzeYPiBWskH1jJ83BvgOEeCFm8DAYNLUET0';
 
+// 注意：supabase 是库全局变量，实例用 sbClient 避免重名冲突
 let sbClient = null;
 try {
     if (SUPABASE_URL && SUPABASE_URL.startsWith('http')) {
         sbClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     } else {
-        console.warn('尚未配置 Supabase 凭证');
+        console.warn('⚠️ 尚未配置 Supabase 凭证，仅可登录预览，数据功能不可用。');
     }
-} catch (e) { console.warn('Supabase 初始化失败：', e); }
+} catch (e) {
+    console.warn('⚠️ Supabase 初始化失败：', e);
+}
 
-// ============ 全局变量 ============
-let currentPhone = '';
-let couponCode = '';
-let selectedRecharge = 200;
-let selectedCoupon = 28;
-let selectedAmount = 172;
-let selectedPayMethod = 'wechat';
-let uploadedFile = null;
-let currentOrderId = '';
-const settingsCache = {};
+// ============================================================
+//  全局变量
+// ============================================================
+let currentOrderData = null;   // 当前查看的订单
+let allOrders = [];             // 缓存的订单列表
 
-// ============ 工具函数 ============
+// ============================================================
+//  Toast
+// ============================================================
 function showToast(msg) {
     const t = document.getElementById('toast');
-    t.textContent = msg; t.classList.add('show');
+    t.textContent = msg;
+    t.classList.add('show');
     setTimeout(() => t.classList.remove('show'), 2200);
 }
-function validatePhone(phone) { return /^1[3-9]\d{9}$/.test(phone); }
-function generateCouponCode() {
-    let code = ''; for (let i = 0; i < 12; i++) code += Math.floor(Math.random() * 10); return code;
-}
-function generateOrderId() {
-    const now = new Date();
-    const dateStr = now.getFullYear().toString() + String(now.getMonth()+1).padStart(2,'0') + String(now.getDate()).padStart(2,'0') + String(now.getHours()).padStart(2,'0') + String(now.getMinutes()).padStart(2,'0') + String(now.getSeconds()).padStart(2,'0');
-    const rand = Math.floor(Math.random() * 9000 + 1000);
-    return 'ORD' + dateStr + rand;
-}
 
-// 超时包装器
-function withTimeout(promise, ms, errMsg) {
-    return Promise.race([
-        promise,
-        new Promise((_, reject) => setTimeout(() => reject(new Error(errMsg || '操作超时')), ms))
-    ]);
-}
+// ============================================================
+//  登录（前端模拟，账号密码存浏览器 localStorage）
+// ============================================================
+function doLogin() {
+    const user = document.getElementById('loginUser').value.trim();
+    const pass = document.getElementById('loginPass').value.trim();
+    const errEl = document.getElementById('loginError');
 
-// ============ 页面切换 ============
-function goStep(stepNum) {
-    document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active'));
-    document.getElementById('step' + stepNum).classList.add('active');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    if (stepNum === 2) {
-        if (!currentOrderId) {
-            currentOrderId = generateOrderId();
-            document.getElementById('sumOrderId').textContent = currentOrderId;
-        }
-        updateQrCode();
+    if (!user || !pass) {
+        errEl.textContent = '请输入账号和密码';
+        errEl.style.display = 'block';
+        return;
     }
-    if (stepNum === 3) { updateQrCode(); }
+
+    let adminInfo = JSON.parse(localStorage.getItem('admin_info') || '{}');
+    const savedUser = adminInfo.username || 'admin';
+    const savedPass = adminInfo.password || 'admin123';
+
+    if (user === savedUser && pass === savedPass) {
+        errEl.style.display = 'none';
+        document.getElementById('loginPage').classList.remove('active');
+        document.getElementById('adminHeader').style.display = 'flex';
+        document.getElementById('dashboardArea').style.display = 'block';
+        document.getElementById('tabBar').style.display = 'flex';
+
+        loadSettings();
+        renderOrderList();
+        showToast('✅ 登录成功！');
+    } else {
+        errEl.textContent = '❌ 账号或密码错误！';
+        errEl.style.display = 'block';
+    }
 }
 
-// ============ 第一步：领取代金券 ============
-async function claimCoupon() {
-    const phoneInput = document.getElementById('phoneInput');
-    const claimBtn = document.getElementById('claimBtn');
-    const statusText = document.getElementById('statusText1');
-    const nextBtn = document.getElementById('nextBtn1');
+// ============================================================
+//  退出登录
+// ============================================================
+function logout() {
+    document.getElementById('dashboardArea').style.display = 'none';
+    document.getElementById('adminHeader').style.display = 'none';
+    document.getElementById('tabBar').style.display = 'none';
+    document.getElementById('loginPage').classList.add('active');
+    document.getElementById('loginUser').value = '';
+    document.getElementById('loginPass').value = '';
+    showToast('👋 已退出登录');
+}
 
-    let phone = phoneInput.value.trim();
-    if (!phone) { showToast('请先输入手机号码'); phoneInput.focus(); return; }
-    if (!validatePhone(phone)) { showToast('手机号格式不正确'); phoneInput.value = ''; phoneInput.focus(); return; }
+// ============================================================
+//  底部 Tab 切换
+// ============================================================
+function switchTab(tabName) {
+    document.querySelectorAll('.tab-item').forEach((item, idx) => {
+        item.classList.toggle('active', (tabName==='orders'&&idx===0)||(tabName==='settings'&&idx===1));
+    });
+    document.getElementById('tabOrders').classList.toggle('active', tabName==='orders');
+    document.getElementById('tabSettings').classList.toggle('active', tabName==='settings');
+}
 
-    claimBtn.disabled = true;
-    claimBtn.innerHTML = '正在领取...';
-    statusText.innerHTML = '<span class="status-dot"></span> 正在生成电子券...';
+// ============================================================
+//  从 Supabase 读取订单列表
+// ============================================================
+async function renderOrderList(filterText) {
+    const listEl = document.getElementById('orderList');
+    if (!sbClient) {
+        listEl.innerHTML = '<div class="empty-state"><div class="empty-icon">⚠️</div><p>尚未配置 Supabase 凭证，无法读取订单</p></div>';
+        return;
+    }
+    const countEl = document.getElementById('orderCount');
+    listEl.innerHTML = '<div class="empty-state"><div class="empty-icon">⏳</div><p>加载中...</p></div>';
 
     try {
-        await new Promise(r => setTimeout(r, 1200));
-        currentPhone = phone;
-        couponCode = generateCouponCode();
-        claimBtn.innerHTML = '已成功领取';
-        statusText.innerHTML = '<span class="status-已发放至您的账户';
-        statusText.classList.add('status-success');
-        nextBtn.disabled = false;
-        document.getElementById('sumCouponCode').textContent = couponCode;
-        if (currentOrderId) document.getElementById('sumOrderId').textContent = currentOrderId;
-        showToast('恭喜！代金券领取成功！');
+        let query = sbClient.from('orders').select('*').order('created_at', { ascending: false });
+        const { data, error } = await query;
+        if (error) throw error;
+
+        allOrders = data || [];
+
+        // 更新统计
+        document.getElementById('statTotal').textContent = allOrders.length;
+        document.getElementById('statPending').textContent = allOrders.filter(o=>o.status==='pending').length;
+        document.getElementById('statApproved').textContent = allOrders.filter(o=>o.status==='approved').length;
+
+        // 搜索过滤
+        let showList = allOrders;
+        if (filterText) {
+            filterText = filterText.toLowerCase();
+            showList = allOrders.filter(o =>
+                (o.phone && o.phone.includes(filterText)) ||
+                (o.order_id && o.order_id.toLowerCase().includes(filterText)) ||
+                (o.coupon_code && o.coupon_code.toLowerCase().includes(filterText))
+            );
+        }
+
+        countEl.textContent = showList.length + ' 条';
+
+        if (showList.length === 0) {
+            listEl.innerHTML = `<div class="empty-state"><div class="empty-icon">📭</div><p>${filterText?'没有找到匹配的订单':'暂无订单数据'}</p></div>`;
+            return;
+        }
+
+        let html = '';
+        showList.forEach(order => {
+            const statusMap = {
+                pending: { text:'待审核', cls:'status-pending' },
+                approved: { text:'已通过', cls:'status-approved' },
+                rejected: { text:'已拒绝', cls:'status-rejected' }
+            };
+            const st = statusMap[order.status] || statusMap.pending;
+            const payLabel = order.pay_method === 'wechat' ? '微信' : '支付宝';
+            const deductLine = (order.coupon_deduct != null)
+                ? `<div class="order-info-row"><span class="order-info-label">充值 ¥${order.recharge} · 券 -¥${order.coupon_deduct}</span><span class="order-info-value"></span></div>`
+                : '';
+            html += `
+                <div class="order-item" onclick="showOrderDetail('${order.order_id}')">
+                    <div class="order-top">
+                        <span class="order-id">${order.order_id}</span>
+                        <span class="order-status ${st.cls}">${st.text}</span>
+                    </div>
+                    <div class="order-info-row"><span class="order-info-label">手机号</span><span class="order-info-value">${order.phone||'-'}</span></div>
+                    <div class="order-info-row"><span class="order-info-label">实付金额</span><span class="order-info-value" style="color:#e8941c;font-weight:700;">¥${order.amount}</span></div>
+                    ${deductLine}
+                    <div class="order-info-row"><span class="order-info-label">支付方式</span><span class="order-info-value">${payLabel}</span></div>
+                    <div class="order-info-row"><span class="order-info-label">时间</span><span class="order-info-value" style="font-size:12px;">${formatTime(order.created_at)}</span></div>
+                </div>`;
+        });
+        listEl.innerHTML = html;
     } catch(e) {
-        claimBtn.disabled = false;
-        claimBtn.innerHTML = '立即领取电子代金券';
-        statusText.innerHTML = '<span class="status-dot"></span> 领取失败，请重试';
-        showToast('领取失败，请稍后重试');
+        console.error('读取订单失败：', e);
+        listEl.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><p>读取失败：${e.message}</p></div>`;
     }
 }
 
-// ============ 第二步：选择金额 ============
-function selectAmount(el) {
-    document.querySelectorAll('.amount-item').forEach(i => i.classList.remove('selected'));
-    el.classList.add('selected');
-    selectedRecharge = parseInt(el.dataset.recharge);
-    selectedCoupon = parseInt(el.dataset.coupon);
-    selectedAmount = parseInt(el.dataset.pay);
-
-    const summaryRows = document.querySelectorAll('#orderSummary .summary-row');
-    summaryRows[2].innerHTML = '<span class="summary-label">充值金额</span><span class="summary-value">¥' + selectedRecharge + '</span>';
-    summaryRows[3].innerHTML = '<span class="summary-label">代金券优惠</span><span class="summary-value" style="color:#16A34A;">- ¥' + selectedCoupon + '</span>';
-    summaryRows[4].innerHTML = '<span class="summary-label">实付金额</span><span class="summary-value summary-highlight">¥' + selectedAmount + '</span>';
+// 时间格式化
+function formatTime(t) {
+    if (!t) return '-';
+    try { return new Date(t).toLocaleString('zh-CN'); } catch(e) { return t; }
 }
 
-// ============ 第二步：选择支付方式 ============
-function selectPay(el) {
-    document.querySelectorAll('.pay-method').forEach(m => m.classList.remove('selected'));
-    el.classList.add('selected');
-    selectedPayMethod = el.dataset.pay;
-    updateQrCode();
+// ============================================================
+//  搜索订单
+// ============================================================
+function searchOrders() {
+    const kw = document.getElementById('searchInput').value.trim();
+    renderOrderList(kw);
 }
 
-// ============ 显示收款码 ============
-function updateQrCode() {
-    const qrPlaceholder = document.getElementById('qrPlaceholder');
-    const qrImage = document.getElementById('qrImage');
-    const qrTip = document.getElementById('qrTip');
+// ============================================================
+//  订单详情弹窗（截图从 screenshot_url 显示）
+// ============================================================
+async function showOrderDetail(orderId) {
+    const { data, error } = await supabase
+        .from('orders')
+        .select('*')
+        .eq('order_id', orderId)
+        .single();
 
-    const wechatQr = settingsCache['wechat_qr'] || '';
-    const alipayQr = settingsCache['alipay_qr'] || '';
-
-    if (selectedPayMethod === 'wechat') {
-        qrTip.textContent = '请使用微信扫码付款';
-        if (wechatQr) { qrPlaceholder.style.display = 'none'; qrImage.style.display = 'block'; qrImage.src = wechatQr; }
-        else { qrPlaceholder.style.display = 'flex'; qrPlaceholder.innerHTML = '<span>微信收款码<br>(管理员未设置)</span>'; qrImage.style.display = 'none'; }
-    } else {
-        qrTip.textContent = '请使用支付宝扫码付款';
-        if (alipayQr) { qrPlaceholder.style.display = 'none'; qrImage.style.display = 'block'; qrImage.src = alipayQr; }
-        else { qrPlaceholder.style.display = 'flex'; qrPlaceholder.innerHTML = '<span>支付宝收款码<br>(管理员未设置)</span>'; qrImage.style.display = 'none'; }
+    if (error || !data) {
+        showToast('❌ 未找到该订单');
+        return;
     }
+    currentOrderData = data;
+
+    const payLabel = data.pay_method === 'wechat' ? '💚 微信支付' : '💙 支付宝支付';
+    const statusMap = {
+        pending: { text:'待审核', color:'#d97706' },
+        approved: { text:'已通过', color:'#16a34a' },
+        rejected: { text:'已拒绝', color:'#dc2626' }
+    };
+    const st = statusMap[data.status] || statusMap.pending;
+
+    let detailHtml = `
+        <div class="detail-row"><span class="detail-label">订单编号</span><span class="detail-value">${data.order_id}</span></div>
+        <div class="detail-row"><span class="detail-label">手机号码</span><span class="detail-value">${data.phone||'-'}</span></div>
+        <div class="detail-row"><span class="detail-label">电子券编号</span><span class="detail-value">${data.coupon_code||'-'}</span></div>
+        <div class="detail-row"><span class="detail-label">充值档位</span><span class="detail-value" style="color:#1e40af;font-weight:700;">¥${data.recharge!=null?data.recharge:data.amount}</span></div>
+        ${data.coupon_deduct!=null ? `<div class="detail-row"><span class="detail-label">代金券抵扣</span><span class="detail-value" style="color:#ef4444;font-weight:700;">-¥${data.coupon_deduct}</span></div>` : ''}
+        <div class="detail-row"><span class="detail-label">实付金额</span><span class="detail-value" style="color:#e8941c;font-weight:700;">¥${data.amount}</span></div>
+        <div class="detail-row"><span class="detail-label">支付方式</span><span class="detail-value">${payLabel}</span></div>
+        <div class="detail-row"><span class="detail-label">订单状态</span><span class="detail-value" style="color:${st.color};font-weight:700;">${st.text}</span></div>
+        <div class="detail-row"><span class="detail-label">提交时间</span><span class="detail-value">${formatTime(data.created_at)}</span></div>`;
+
+    if (data.screenshot_url) {
+        detailHtml += `
+            <div style="margin-top:14px;">
+                <p style="font-size:13px;color:#64748b;margin-bottom:6px;">📷 付款凭证截图：</p>
+                <img class="detail-screenshot" src="${data.screenshot_url}" alt="付款截图">
+            </div>`;
+    }
+
+    document.getElementById('modalDetailBody').innerHTML = detailHtml;
+
+    let actionsHtml = '';
+    if (data.status === 'pending') {
+        actionsHtml = `
+            <button class="action-btn btn-approve" onclick="updateOrderStatus('approved')">✅ 通过审核</button>
+            <button class="action-btn btn-reject" onclick="updateOrderStatus('rejected')">❌ 拒绝订单</button>`;
+    }
+    actionsHtml += `<button class="action-btn btn-close-modal" onclick="closeModal()">关闭</button>`;
+    document.getElementById('modalActions').innerHTML = actionsHtml;
+
+    document.getElementById('orderModal').classList.add('show');
 }
 
-// ============ 处理截图上传 ============
-function handleUpload(event) {
-    const file = event.target.files[0];
+// ============================================================
+//  关闭弹窗
+// ============================================================
+function closeModal() {
+    document.getElementById('orderModal').classList.remove('show');
+    currentOrderData = null;
+}
+document.getElementById('orderModal').addEventListener('click', function(e) {
+    if (e.target === this) closeModal();
+});
+
+// ============================================================
+//  修改订单状态（更新 Supabase）
+// ============================================================
+async function updateOrderStatus(newStatus) {
+    if (!currentOrderData) return;
+    const { error } = await supabase
+        .from('orders')
+        .update({ status: newStatus })
+        .eq('order_id', currentOrderData.order_id);
+
+    if (error) {
+        showToast('❌ 更新失败：' + error.message);
+        return;
+    }
+    const msg = newStatus === 'approved' ? '✅ 已标记为通过' : '❌ 已标记为拒绝';
+    showToast(msg);
+    closeModal();
+    renderOrderList();
+}
+
+// ============================================================
+//  设置功能（key-value 存 settings 表）
+// ============================================================
+
+// 收款码预览
+function previewQr(input, previewId, textId) {
+    const file = input.files[0];
     if (!file) return;
-    if (file.size > 5 * 1024 * 1024) { showToast('图片大小不能超过5MB'); return; }
-
-    uploadedFile = file;
+    if (file.size > 2 * 1024 * 1024) { showToast('⚠️ 图片不能超过2MB'); return; }
     const reader = new FileReader();
     reader.onload = function(e) {
-        const preview = document.getElementById('previewImg');
-        preview.src = e.target.result; preview.classList.add('show');
-        document.getElementById('uploadArea').classList.add('has-image');
-        document.getElementById('uploadIcon').style.display = 'none';
-        document.getElementById('uploadText').textContent = '点击重新选择图片';
-        document.getElementById('statusText3').innerHTML = '<span class="status-dot"></span> 截图已选择，可提交订单';
-        document.getElementById('statusText3').classList.add('status-success');
-        showToast('截图已选择');
+        const preview = document.getElementById(previewId);
+        preview.src = e.target.result;
+        preview.classList.add('show');
+        document.getElementById(textId).textContent = '✅ 已选择图片，点击可重新选择';
     };
     reader.readAsDataURL(file);
 }
 
-// ============ 提交订单（点完直接跳第4步） ============
-async function submitOrder() {
-    if (!uploadedFile) { showToast('请先上传付款截图'); return; }
-
-    // 确保订单编号存在
-    if (!currentOrderId) currentOrderId = generateOrderId();
-
-    // 先设置订单编号，再跳页
-    document.getElementById('resultOrderId').textContent = '订单编号：' + currentOrderId;
-    document.getElementById('resultOrderIdFail').textContent = '订单编号：' + currentOrderId;
-
-    // 直接跳到第4步（加载页）
-    goStep(4);
-
-    let failReason = '网络异常，请联系在线客服';
-
+// 加载设置
+async function loadSettings() {
     try {
-        if (!sbClient) {
-            failReason = '系统维护中，请联系在线客服';
-            throw new Error(failReason);
-        }
+        if (!sbClient) return; // 未配置凭证则不读取
+        const { data, error } = await sbClient.from('settings').select('key, value');
+        if (error) throw error;
+        const map = {};
+        (data || []).forEach(r => map[r.key] = r.value);
 
-        const orderId = currentOrderId;
-        const fileExt = uploadedFile.name.split('.').pop() || 'jpg';
-        const filePath = `order_${orderId}_${Date.now()}.${fileExt}`;
+        document.getElementById('setSiteName').value设置继续').value;
 
-        // 带超时的上传
-        const uploadPromise = sbClient.storage.from('screenshots').upload(filePath, uploadedFile, { upsert: false });
-        const { error: upErr } = await withTimeout(uploadPromise, 8000, '上传超时');
-        if (upErr) throw upErr;
+    if (!oldPass || !newPass || !confirmPass) {
+        showToast('⚠️ 请填写完整所有密码字段');
+        return;
+    }
+    let adminInfo = JSON.parse(localStorage.getItem('admin_info') || '{}');
+    const currentSavedPass = adminInfo.password || 'admin123';
+    if (oldPass !== currentSavedPass) { showToast('❌ 当前密码不正确'); return; }
+    if (newPass.length < 6) { showToast('⚠️ 新密码至少6位'); return; }
+    if (newPass !== confirmPass) { showToast('❌ 两次输入的新密码不一致'); return; }
 
-        const { data: urlData } = sbClient.storage.from('screenshots').getPublicUrl(filePath);
-        const screenshotUrl = urlData.publicUrl;
+    adminInfo.password = newPass;
+    if (!adminInfo.username) adminInfo.username = 'admin';
+    localStorage.setItem('admin_info', JSON.stringify(adminInfo));
 
-        // 带超时的插入
-        const insertPromise = sbClient.from('orders').insert({
-            order_id: orderId, phone: currentPhone, coupon_code: couponCode,
-            recharge: selectedRecharge, coupon_deduct: selectedCoupon, amount: selectedAmount,
-            pay_method: selectedPayMethod, screenshot_url: screenshotUrl, status: 'pending'
-        });
-        const { error: insErr } = await withTimeout(insertPromise, 8000, '写入超时');
-        if (insErr) throw insErr;
+    document.getElementById('oldPass').value = '';
+    document.getElementById('newPass').value = '';
+    document.getElementById('confirmPass').value = '';
+    showToast('✅ 密码修改成功！');
+}
 
-        failReason = '充值失败，请联系在线客服';
-    } catch(e) {
-        console.error('提交异常：', e);
-        failReason = e.message || '网络错误，请联系在线客服';
-        if (failReason.includes('Invalid') || failReason.includes('J
+// ============================================================
+//  回车键快捷操作
+// ============================================================
+document.addEventListener('DOMContentLoaded', function() {
+    const si = document.getElementById('searchInput');
+    if (si) si.addEventListener('keydown', e => { if (e.key==='Enter') searchOrders(); });
+    const lp = document.getElementById('loginPass');
+    if (lp) lp.addEventListener('keydown', e => { if (e.key==='Enter') doLogin(); });
+});
+</script>
+
+</body>
+</html>
