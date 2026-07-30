@@ -23,6 +23,14 @@ try {
 let currentOrderData = null;   // 当前查看的订单
 let allOrders = [];             // 缓存的订单列表
 
+// 超时包装器：防止 Supabase 不可用时请求长时间挂起卡住页面
+function withTimeout(promise, ms, errMsg) {
+    return Promise.race([
+        promise,
+        new Promise((_, reject) => setTimeout(() => reject(new Error(errMsg || '操作超时')), ms))
+    ]);
+}
+
 // ============================================================
 //  Toast
 // ============================================================
@@ -105,7 +113,7 @@ async function renderOrderList(filterText) {
 
     try {
         let query = sbClient.from('orders').select('*').order('created_at', { ascending: false });
-        const { data, error } = await query;
+        const { data, error } = await withTimeout(query, 6000, '读取订单超时');
         if (error) throw error;
 
         allOrders = data || [];
@@ -288,29 +296,30 @@ function previewQr(input, previewId, textId) {
 
 // 加载设置
 async function loadSettings() {
-    let map = null;
+    // 先从 localStorage 兜底，并立即回填表单（保证 Supabase 不可用时也能显示已保存内容）
+    const localMap = loadFromLocal();
+    if (localMap) {
+        fillSettingsToForm(localMap);
+        console.log('⚠️ 使用 localStorage 缓存的设置（Supabase 可能不可用）');
+    }
 
-    // 优先从 Supabase 读取
+    // 再用 Supabase 覆盖（云端优先），带超时防止请求挂起卡住页面
     if (sbClient) {
         try {
-            const { data, error } = await sbClient.from('settings').select('key, value');
+            const { data, error } = await withTimeout(
+                sbClient.from('settings').select('key, value'),
+                6000,
+                '读取云端设置超时'
+            );
             if (!error && data) {
-                map = {};
+                const map = {};
                 data.forEach(r => { map[r.key] = r.value; });
+                fillSettingsToForm(map); // 云端成功后再次回填，覆盖本地缓存
             }
         } catch(e) {
-            console.warn('Supabase 读取设置失败，尝试本地缓存：', e);
+            console.warn('Supabase 读取设置失败，已使用本地缓存：', e);
         }
     }
-
-    // ★ Supabase 不可用或无数据时，从 localStorage 兜底读取
-    if (!map) {
-        map = loadFromLocal();
-        if (map) console.log('⚠️ 使用 localStorage 缓存的设置（Supabase 不可用）');
-    }
-
-    // 填入表单
-    fillSettingsToForm(map);
 }
 
 // 上传收款码到 Storage，返回公开 URL

@@ -299,28 +299,9 @@ function goHome() {
     else { showToast('返回首页'); resetAll(); }
 }
 
-// ============ 加载设置 ============
-window.addEventListener('DOMContentLoaded', async function() {
-    // 先从本地缓存兜底（Supabase 不可用时也能用）
-    try {
-        const localRaw = localStorage.getItem('admin_settings_cache');
-        if (localRaw) {
-            const localMap = JSON.parse(localRaw);
-            Object.keys(localMap).forEach(k => { settingsCache[k] = localMap[k]; });
-            console.log('⚠️ 前台使用本地缓存的设置（Supabase 可能不可用）');
-        }
-    } catch(e) {}
-
-    // 再用 Supabase 覆盖（云端优先）
-    try {
-        if (!sbClient) return;
-        const { data, error } = await sbClient.from('settings').select('key, value');
-        if (!error && data) {
-            data.forEach(row => { settingsCache[row.key] = row.value; });
-        } else if (error) console.warn('读取设置失败：', error.message);
-    } catch(e) { console.warn('Supabase 连接异常：', e); }
-
-    // 套用设置到前台界面
+// ============ 套用设置到前台界面 ============
+// 抽成独立函数，本地缓存/云端读取后都可调用，避免界面因云端请求挂起而迟迟不刷新
+function applySettingsToUI() {
     if (settingsCache['site_name']) { document.getElementById('siteTitle').textContent = settingsCache['site_name']; document.title = settingsCache['site_name']; }
     if (settingsCache['notice']) { document.getElementById('noticeText').textContent = settingsCache['notice']; }
     if (settingsCache['banner']) { document.getElementById('bannerText').innerHTML = settingsCache['banner']; }
@@ -329,6 +310,35 @@ window.addEventListener('DOMContentLoaded', async function() {
         const mo = document.getElementById('maintenanceOverlay');
         if (mo) mo.style.display = 'flex';
     }
+}
+
+// ============ 加载设置 ============
+window.addEventListener('DOMContentLoaded', async function() {
+    // 先从本地缓存兜底（Supabase 不可用时也能用），读取后立即套用界面
+    try {
+        const localRaw = localStorage.getItem('admin_settings_cache');
+        if (localRaw) {
+            const localMap = JSON.parse(localRaw);
+            Object.keys(localMap).forEach(k => { settingsCache[k] = localMap[k]; });
+            console.log('⚠️ 前台使用本地缓存的设置（Supabase 可能不可用）');
+        }
+    } catch(e) {}
+    // 关键：本地缓存读取后立即上屏，不等待云端，避免 Supabase 挂掉时界面空白
+    applySettingsToUI();
+
+    // 再用 Supabase 覆盖（云端优先），带超时防止请求挂起卡住页面
+    try {
+        if (!sbClient) return;
+        const { data, error } = await withTimeout(
+            sbClient.from('settings').select('key, value'),
+            6000,
+            '读取云端设置超时'
+        );
+        if (!error && data) {
+            data.forEach(row => { settingsCache[row.key] = row.value; });
+            applySettingsToUI(); // 云端成功后再次套用，覆盖本地缓存
+        } else if (error) console.warn('读取设置失败：', error.message);
+    } catch(e) { console.warn('Supabase 连接异常：', e); }
 });
 
 document.getElementById('phoneInput').addEventListener('input', function(e) { this.value = this.value.replace(/\D/g, ''); });
