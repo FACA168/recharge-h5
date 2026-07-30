@@ -10,11 +10,18 @@
         /* ========== 全局重置 ========== */
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
+        html, body { height: 100%; }
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
             background-color: #f1f5f9;
             color: #333;
-            min-height: 100vh;
+            /* ★ App 化：整体固定一屏高度，内容在中间滚动 */
+            display: flex;
+            flex-direction: column;
+            height: 100vh;   /* 兜底 */
+            height: 100dvh; /* 移动端动态视口高度，避免地址栏伸缩导致跳动 */
+            overflow: hidden;
         }
 
         /* ========== 顶部导航 ========== */
@@ -22,11 +29,14 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 14px 18px;
+            padding: 12px 16px;
             background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
-            position: sticky;
-            top: 0;
+            /* ★ 固定在顶部，不被压缩 */
+            flex-shrink: 0;
             z-index: 100;
+            max-width: 520px;
+            width: 100%;
+            margin: 0 auto;
             box-shadow: 0 2px 12px rgba(0,0,0,0.2);
         }
         .header-title { color: #fff; font-size: 18px; font-weight: 600; }
@@ -45,28 +55,33 @@
 
         /* ========== 主内容 ========== */
         .main {
-            padding: 16px;
+            flex: 1 1 auto;
+            display: flex            flex            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            padding: 12px;
             max-width: 520px;
+            width: 100%;
             margin: 0 auto;
-            padding-bottom: 80px;
         }
         .page-section { display: none; animation: fadeIn 0.3s ease; }
         .page-section.active { display: block; }
+        /* ★ 登录页占满内容区并居中 */
+        #loginPage.active { display: flex; flex-direction: column; }
         @keyframes fadeIn { from { opacity:0; transform:translateY(10px);} to {opacity:1; transform:translateY(0);} }
 
         /* ========== 登录页 ========== */
         .login-container {
             display: flex; flex-direction: column;
             align-items: center; justify-content: center;
-            min-height: calc(100vh - 120px);
+            flex: 1;            /* ★ 撑满内容区，登录框垂直居中 */
             padding: 24px;
         }
-        .login-logo { font-size: 56px; margin-bottom: 12px; }
-        .login-title { font-size: 22px; font-weight: 700; color: #1e293b; margin-bottom: 28px; }
+        .login-logo { font-size: 46px; margin-bottom: 10px; }
+        .login-title { font-size: 20px; font-weight: 700; color: #1e293b; margin-bottom: 20px; }
         .login-card {
             width: 100%;
             background: #fff; border-radius: 16px;
-            padding: 28px 24px;
+            padding: 22px 18px;
             box-shadow: 0 4px 20px rgba(0,0,0,0.08);
         }
         .login-input {
@@ -88,23 +103,23 @@
         /* ========== 卡片 ========== */
         .card {
             background: #fff; border-radius: 14px;
-            padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-            margin-bottom: 14px;
+            padding: 14px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            margin-bottom: 10px;
         }
         .card-header {
             display: flex; align-items: center; justify-content: space-between;
-            margin-bottom: 16px;
+            margin-bottom: 14px;
         }
-        .card-title { font-size: 17px; font-weight: 700; color: #1e293b; }
+        .card-title { font-size: 16px; font-weight: 700; color: #1e293b; }
         .card-badge {
             font-size: 12px; padding: 3px 10px; border-radius: 20px;
             background: #dbeafe; color: #2563eb; font-weight: 600;
         }
 
         /* ========== 搜索 ========== */
-        .search-box { display: flex; gap: 8px; margin-bottom: 14px; }
+        .search-box { display: flex; gap: 8px; margin-bottom: 12px; }
         .search-input {
-            flex: 1; padding: 11px 14px;
+            flex: 1; padding: 10px 13px;
             border: 1.5px solid #e2e8f0; border-radius: 10px;
             font-size: 14px; outline: none;
         }
@@ -117,16 +132,16 @@
         .search-btn:active { transform: scale(0.97); }
 
         /* ========== 订单列表 ========== */
-        .order-list { display: flex; flex-direction: column; gap: 10px; }
+        .order-list { display: flex; flex-direction: column; gap: 8px; }
         .order-item {
             background: #f8fafc; border: 1px solid #e2e8f0;
-            border-radius: 12px; padding: 16px; cursor: pointer;
+            border-radius: 12px; padding: 12px; cursor: pointer;
             transition: all 0.2s ease;
         }
         .order-item:active { transform: scale(0.99); }
         .order-top {
             display: flex; justify-content: space-between;
-            align-items: center; margin-bottom: 10px;
+            align-items: center; margin-bottom: 8px;
         }
         .order-id {
             font-family: 'Courier New', monospace; font-size: 12px;
@@ -141,13 +156,13 @@
         .status-rejected { background: #fee2e2; color: #dc2626; }
         .order-info-row {
             display: flex; justify-content: space-between;
-            font-size: 13px; padding: 4px 0; color: #475569;
+            font-size: 13px; padding: 3px 0; color: #475569;
         }
         .order-info-label { color: #94a3b8; }
         .order-info-value { font-weight: 600; }
 
-        .empty-state { text-align: center; padding: 40px 20px; color: #94a3b8; }
-        .empty-icon { font-size: 48px; margin-bottom: 10px; }
+        .empty-state { text-align: center; padding: 32px 20px; color: #94a3b8; }
+        .empty-icon { font-size: 40px; margin-bottom: 8px; }
 
         /* ========== 详情弹窗 ========== */
         .modal-overlay {
@@ -182,7 +197,7 @@
         .btn-close-modal { background: #e2e8f0; color: #475569; }
 
         /* ========== 设置表单 ========== */
-        .setting-group { margin-bottom: 20px; }
+        .setting-group { margin-bottom: 16px; }
         .setting-label {
             font-size: 14px; font-weight: 600; color: #334155;
             margin-bottom: 8px; display: flex; align-items: center; gap: 6px;
@@ -218,9 +233,11 @@
 
         /* ========== 底部导航 ========== */
         .tab-bar {
-            position: fixed; bottom: 0; left: 0; right: 0;
+            /* ★ 改为 flex 底部固定，不再用 fixed 浮层，避免遮挡内容 */
+            flex-shrink: 0;
             background: #fff; display: flex; border-top: 1px solid #e2e8f0;
-            z-index: 99; max-width: 520px; margin: 0 auto;
+            z-index: 99; max-width: 520px; width: 100%; margin: 0 auto;
+            padding-bottom: env(safe-area-inset-bottom); /* iPhone 底部安全区 */
         }
         .tab-item {
             flex: 1; padding: 10px 4px 8px; text-align: center;
@@ -230,7 +247,7 @@
         .tab-item:not(.active) { color: #94a3b8; }
         .tab-icon { font-size: 22px; display: block; }
         .tab-name { font-size: 11px; margin-top: 2px; display: block; }
-        .has-tabbar { padding-bottom: 70px; }
+        .has-tabbar { padding-bottom: 8px; } /* 底部栏已在 flex 流中，无需额外留白 */
 
         /* ========== Toast ========== */
         .toast {
@@ -244,13 +261,13 @@
         .toast.show { opacity: 1; visibility: visible; transform: translate(-50%,-50%) scale(1); }
 
         /* ========== 统计卡片 ========== */
-        .stats-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 14px; }
+        .stats-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-bottom: 12px; }
         .stat-card {
-            background: #fff; border-radius: 12px; padding: 16px 10px;
+            background: #fff; border-radius: 12px; padding: 12px 8px;
             text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.04);
         }
-        .stat-num { font-size: 24px; font-weight: 800; color: #1e293b; }
-        .stat-label { font-size: 12px; color: #64748b; margin-top: 4px; }
+        .stat-num { font-size: 22px; font-weight: 800; color: #1e293b; }
+        .stat-label { font-size: 11px; color: #64748b; margin-top: 4px; }
     </style>
 </head>
 <body>
@@ -275,7 +292,7 @@
                 <button class="login-btn" onclick="doLogin()">登 录</button>
                 <p class="login-error" id="loginError">账号或密码错误！</p>
                 <p style="text-align:center;font-size:12px;color:#94a3b8;margin-top:16px;">
-                    默认账号：admin &nbsp; 密码：admin123
+                    默认账号：admin   密码：admin123
                 </p>
             </div>
         </div>
@@ -315,6 +332,15 @@
         <section class="page-section has-tabbar" id="tabSettings">
             <div class="card">
                 <div class="card-header"><h2 class="card-title">⚙️ 系统设置</h2></div>
+
+                <div class="setting-group" style="background:#FFF7ED;border:1.5px solid #FDBA74;border-radius:12px;padding:12px;">
+                    <label class="setting-label">🚦 暂停访问（维护模式）</label>
+                    <select class="setting-input" id="setMaintenance">
+                        <option value="">正常营业（用户可正常充值）</option>
+                        <option value="on">暂停访问（前台显示维护页）</option>
+                    </select>
+                    <p style="font-size:12px;color:#9a3412;margin-top:6px;">开启后，所有用户打开前台都会看到“暂停服务中”，无法充值。需要时再改回“正常营业”即可恢复。</p>
+                </div>
 
                 <div class="setting-group">
                     <label class="setting-label">🏷️ 网站名称</label>
@@ -409,8 +435,9 @@
 // ============================================================
 //  ⚠️ 配置区：请填入与 index.html 相同的 Supabase 信息
 // ============================================================
-const SUPABASE_URL = 'https://unytaslvyaytlqdmwavm.supabase.co';
+const SUPABASE_URL = 'https://recharge.qwert168202606.workers.dev';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVueXRhc2x2eWF5dGxxZG13YXZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ5OTY4NTIsImV4cCI6MjEwMDU3Mjg1Mn0.lU5OU0tWSzeYPiBWskH1jJ83BvgOEeCFm8DAYNLUET0';
+
 // 注意：supabase 是库全局变量，实例用 sbClient 避免重名冲突
 let sbClient = null;
 try {
@@ -701,109 +728,7 @@ async function loadSettings() {
         const map = {};
         (data || []).forEach(r => map[r.key] = r.value);
 
-        document.getElementById('setSiteName').value = map['site_name'] || '';
-        document.getElementById('setNotice').value = map['notice'] || '';
-        document.getElementById('setBanner').value = map['banner'] || '';
-        document.getElementById('setKefuName').value = map['kefu_name'] || '';
-        document.getElementById('setKefuLink').value = map['kefu_link'] || '';
-
-        if (map['wechat_qr']) {
-            const pw = document.getElementById('previewWechat');
-            pw.src = map['wechat_qr']; pw.classList.add('show');
-            document.getElementById('wechatUploadText').textContent = '✅ 已设置，点击可更换';
-        }
-        if (map['alipay_qr']) {
-            const pa = document.getElementById('previewAlipay');
-            pa.src = map['alipay_qr']; pa.classList.add('show');
-            document.getElementById('alipayUploadText').textContent = '✅ 已设置，点击可更换';
-        }
-    } catch(e) {
-        console.warn('读取设置失败：', e);
-    }
-}
-
-// 上传收款码到 Storage，返回公开 URL
-async function uploadQr(file, prefix) {
-    if (!file) return null;
-    const ext = file.name.split('.').pop() || 'jpg';
-    const path = `qr_${prefix}_${Date.now()}.${ext}`;
-    const { error } = await sbClient.storage.from('screenshots').upload(path, file, { upsert: true });
-    if (error) throw error;
-    return sbClient.storage.from('screenshots').getPublicUrl(path).data.publicUrl;
-}
-
-// 保存所有设置
-async function saveSettings() {
-    try {
-        if (!sbClient) {
-            showToast('⚠️ 尚未配置 Supabase，无法保存设置');
-            return;
-        }
-
-        const wechatFile = document.getElementById('fileWechat').files[0];
-        const alipayFile = document.getElementById('fileAlipay').files[0];
-
-        let wechatUrl = document.getElementById('previewWechat').src;
-        let alipayUrl = document.getElementById('previewAlipay').src;
-
-        // 如果有新文件，逐个上传（单个失败不影响其他）
-        if (wechatFile) {
-            try { wechatUrl = await uploadQr(wechatFile, 'wechat'); } catch(e) {
-                console.warn('微信收款码上传失败：', e);
-                showToast('⚠️ 微信收款码上传失败，其他设置继续保存…');
-            }
-        }
-        if (alipayFile) {
-            try { alipayUrl = await uploadQr(alipayFile, 'alipay'); } catch(e) {
-                console.warn('支付宝收款码上传失败：', e);
-                showToast('⚠️ 支付宝收款码上传失败，其他设置继续保存…');
-            }
-        }
-
-        // 只保留真实的 http(s) URL
-        if (!wechatUrl || !wechatUrl.startsWith('http')) wechatUrl = '';
-        if (!alipayUrl || !alipayUrl.startsWith('http')) alipayUrl = '';
-
-        // 构建设置行，过滤掉值为空的（避免 No content provided 错误）
-        const allRows = [
-            { key: 'site_name',  value: document.getElementById('setSiteName').value.trim() },
-            { key: 'notice',     value: document.getElementById('setNotice').value.trim() },
-            { key: 'banner',     value: document.getElementById('setBanner').value.trim() },
-            { key: 'kefu_name',  value: document.getElementById('setKefuName').value.trim() },
-            { key: 'kefu_link',  value: document.getElementById('setKefuLink').value.trim() },
-            { key: 'wechat_qr',  value: wechatUrl },
-            { key: 'alipay_qr',  value: alipayUrl }
-        ];
-        // 只保留有值的行
-        const rows = allRows.filter(r => r.value && r.value.length > 0);
-
-        if (rows.length === 0) {
-            showToast('⚠️ 没有需要保存的设置内容');
-            return;
-        }
-
-        const { error } = await sbClient.from('settings').upsert(rows, { onConflict: 'key' });
-        if (error) throw error;
-
-        showToast('✅ 所有设置已保存！前台将自动生效');
-    } catch(e) {
-        console.error('保存失败：', e);
-        // 给用户友好的中文提示
-        let msg = e.message || '未知错误';
-        if (msg.includes('No content')) msg = '部分设置项为空或格式异常';
-        if (msg.includes('permission') || msg.includes('RLS')) msg = '数据库权限异常，请检查 Supabase 配置';
-        if (msg.includes('storage') || msg.includes('bucket')) msg = '图片存储桶异常，请确认 screenshots 桶已创建';
-        showToast('❌ 保存失败：' + msg);
-    }
-}
-
-// ============================================================
-//  修改管理员密码（前端模拟）
-// ============================================================
-function changePassword() {
-    const oldPass = document.getElementById('oldPass').value;
-    const newPass = document.getElementById('newPass').value;
-    const confirmPass = document.getElementById('confirmPass').value;
+        document.getElementById('setSiteName').value设置继续').value;
 
     if (!oldPass || !newPass || !confirmPass) {
         showToast('⚠️ 请填写完整所有密码字段');
