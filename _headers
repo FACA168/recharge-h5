@@ -21,8 +21,8 @@
 /*.ico
   Cache-Control: public, max-age=3600, immutable
 
-# JS / CSS：缓存 1 小时
+# JS / CSS：不缓存，确保每次部署即时生效（避免手机端长期缓存旧版）
 /*.js
-  Cache-Control: public, max-age=3600, immutable
+  Cache-Control: public, max-age=0, must-revalidate
 /*.css
-  Cache-Control: public, max-age=3600, immutable
+  Cache-Control: public, max-age=0, must-revalidate
