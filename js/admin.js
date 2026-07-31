@@ -39,7 +39,7 @@ function showToast(msg) {
     t.textContent = msg;
     t.classList.add('show');
     setTimeout(() => t.classList.remove('show'), 3500);
-}}
+}
 
 // ============================================================
 //  登录（前端模拟，账号密码存浏览器 localStorage）
