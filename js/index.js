@@ -249,15 +249,25 @@ function showFailState(reason) {
     document.getElementById('resultFailState').style.display = 'block';
 }
 
-// ============ 联系客服（后台设了链接就直接转跳，否则进内置客服页） ============
+// ============ 联系客服（直接跳转后台设置的链接） ============
 function contactKefu() {
-    const kefuLink = settingsCache['kefu_link'] || '';
+    // 优先从内存缓存读取，其次从 localStorage 兜底（Supabase 不可用时也能跳转）
+    let kefuLink = settingsCache['kefu_link'] || '';
+    if (!kefuLink) {
+        try {
+            const localRaw = localStorage.getItem('admin_settings_cache');
+            if (localRaw) {
+                const localMap = JSON.parse(localRaw);
+                kefuLink = localMap['kefu_link'] || '';
+            }
+        } catch(e) {}
+    }
     if (kefuLink) {
-        // 后台配置了客服链接 → 直接转跳到该链接
+        // 直接跳转后台设置的客服链接
         window.location.href = kefuLink;
     } else {
-        // 没配链接时，跳转内置客服页面
-        window.location.href = './kefu.html';
+        // 后台还没设置客服链接时，提示一下
+        showToast('客服链接尚未配置，请联系管理员');
     }
 }
 
