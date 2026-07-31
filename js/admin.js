@@ -38,8 +38,8 @@ function showToast(msg) {
     const t = document.getElementById('toast');
     t.textContent = msg;
     t.classList.add('show');
-    setTimeout(() => t.classList.remove('show'), 2200);
-}
+    setTimeout(() => t.classList.remove('show'), 3500);
+}}
 
 // ============================================================
 //  登录（前端模拟，账号密码存浏览器 localStorage）
@@ -479,7 +479,7 @@ async function saveSettings() {
         // Supabase 不可用时，localStorage 已经存好了，提示用户
         let msg = e.message || '未知错误';
         if (msg.includes('Failed to fetch') || msg.includes('NetworkError') || msg.includes('SSL_ERROR')) {
-            showToast('⚠️ Supabase 暂时不可用，设置已保存在本机浏览器中（换电脑/清缓存会丢失）。恢复后点"保存所有设置"即可同步。');
+            showToast('✅ 已保存到本机浏览器（云端暂不可用，恢复后点保存即可同步）');
         } else if (msg.includes('No content')) {
             showToast('⚠️ 部分设置项为空或格式异常（已存本地）');
         } else if (msg.includes('permission') || msg.includes('RLS')) {
