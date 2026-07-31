@@ -325,9 +325,14 @@ async function loadSettings() {
 // 上传收款码到 Storage，返回公开 URL
 async function uploadQr(file, prefix) {
     if (!file) return null;
+    if (!sbClient) return null;   // Supabase 不可用，直接跳过上传（后续走本地缓存）
     const ext = file.name.split('.').pop() || 'jpg';
     const path = `qr_${prefix}_${Date.now()}.${ext}`;
-    const { error } = await sbClient.storage.from('screenshots').upload(path, file, { upsert: true });
+    const { error } = await withTimeout(
+        sbClient.storage.from('screenshots').upload(path, file, { upsert: true }),
+        6000,
+        '上传超时'
+    );
     if (error) throw error;
     return sbClient.storage.from('screenshots').getPublicUrl(path).data.publicUrl;
 }
