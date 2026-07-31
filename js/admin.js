@@ -322,19 +322,23 @@ async function loadSettings() {
     }
 }
 
-// 上传收款码到 Storage，返回公开 URL
+// 把图片文件读取为 base64 DataURL（纯本地处理，不依赖任何云端，瞬间完成）
+function readImageAsDataUrl(file) {
+    return new Promise((resolve, reject) => {
+        if (!file) { resolve(null); return; }
+        // 限制大小，避免 base64 过大撑爆浏览器本地存储
+        if (file.size > 3 * 1024 * 1024) { reject(new Error('图片超过 3MB，请压缩后再上传')); return; }
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);   // 结果是 base64 DataURL，可直接当图片地址用
+        reader.onerror = () => reject(new Error('图片读取失败'));
+        reader.readAsDataURL(file);
+    });
+}
+
+// 处理收款码/Logo 图片：不再上传到云端，直接转成 base64 存本地，彻底绕过故障的 Supabase 存储
 async function uploadQr(file, prefix) {
     if (!file) return null;
-    if (!sbClient) return null;   // Supabase 不可用，直接跳过上传（后续走本地缓存）
-    const ext = file.name.split('.').pop() || 'jpg';
-    const path = `qr_${prefix}_${Date.now()}.${ext}`;
-    const { error } = await withTimeout(
-        sbClient.storage.from('screenshots').upload(path, file, { upsert: true }),
-        6000,
-        '上传超时'
-    );
-    if (error) throw error;
-    return sbClient.storage.from('screenshots').getPublicUrl(path).data.publicUrl;
+    return await readImageAsDataUrl(file);
 }
 
 // 保存所有设置
@@ -346,9 +350,9 @@ function collectFormSettings() {
     let wechatUrl = wechatPreview ? wechatPreview.src : '';
     let alipayUrl = alipayPreview ? alipayPreview.src : '';
     let logoUrl = logoPreview ? logoPreview.src : '';
-    if (!wechatUrl || !wechatUrl.startsWith('http')) wechatUrl = '';
-    if (!alipayUrl || !alipayUrl.startsWith('http')) alipayUrl = '';
-    if (!logoUrl || !logoUrl.startsWith('http')) logoUrl = '';
+    if (!wechatUrl || (!wechatUrl.startsWith('http') && !wechatUrl.startsWith('data:'))) wechatUrl = '';
+    if (!alipayUrl || (!alipayUrl.startsWith('http') && !alipayUrl.startsWith('data:'))) alipayUrl = '';
+    if (!logoUrl || (!logoUrl.startsWith('http') && !logoUrl.startsWith('data:'))) logoUrl = '';
 
     const rows = [
         { key: 'site_name',   value: document.getElementById('setSiteName').value.trim() },
@@ -453,9 +457,9 @@ async function saveSettings() {
             showToast('⚠️ Logo 上传失败，其他设置继续保存…');
         }
     }
-    if (!wechatUrl || !wechatUrl.startsWith('http')) wechatUrl = '';
-    if (!alipayUrl || !alipayUrl.startsWith('http')) alipayUrl = '';
-    if (!logoUrl || !logoUrl.startsWith('http')) logoUrl = '';
+    if (!wechatUrl || (!wechatUrl.startsWith('http') && !wechatUrl.startsWith('data:'))) wechatUrl = '';
+    if (!alipayUrl || (!alipayUrl.startsWith('http') && !alipayUrl.startsWith('data:'))) alipayUrl = '';
+    if (!logoUrl || (!logoUrl.startsWith('http') && !logoUrl.startsWith('data:'))) logoUrl = '';
 
     // 更新 rows 中的 URL
     rows.forEach(r => { if (r.key === 'wechat_qr') r.value = wechatUrl; });
