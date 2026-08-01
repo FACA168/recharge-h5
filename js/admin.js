@@ -82,13 +82,8 @@ function doLogin() {
 
     if (user === savedUser && pass === savedPass) {
         errEl.style.display = 'none';
-        document.getElementById('loginPage').classList.remove('active');
-        document.getElementById('adminHeader').style.display = 'flex';
-        document.getElementById('dashboardArea').style.display = 'block';
-        document.getElementById('tabBar').style.display = 'flex';
-
-        loadSettings();
-        renderOrderList();
+        localStorage.setItem('admin_logged_in', '1'); // 记住登录态，刷新不再退出登录
+        enterDashboard();
         showToast('✅ 登录成功！');
     } else {
         errEl.textContent = '❌ 账号或密码错误！';
@@ -97,9 +92,22 @@ function doLogin() {
 }
 
 // ============================================================
+//  进入后台主界面（登录成功 / 刷新后自动恢复登录态 共用）
+// ============================================================
+function enterDashboard() {
+    document.getElementById('loginPage').classList.remove('active');
+    document.getElementById('adminHeader').style.display = 'flex';
+    document.getElementById('dashboardArea').style.display = 'block';
+    document.getElementById('tabBar').style.display = 'flex';
+    loadSettings();
+    renderOrderList();
+}
+
+// ============================================================
 //  退出登录
 // ============================================================
 function logout() {
+    localStorage.removeItem('admin_logged_in'); // 清除登录态
     document.getElementById('dashboardArea').style.display = 'none';
     document.getElementById('adminHeader').style.display = 'none';
     document.getElementById('tabBar').style.display = 'none';
@@ -134,7 +142,7 @@ async function renderOrderList(filterText) {
 
     try {
         let query = sbClient.from('orders').select('*').order('created_at', { ascending: false });
-        const { data, error } = await withTimeout(query, 6000, '读取订单超时');
+        const { data, error } = await withTimeout(query, 15000, '读取订单超时');
         if (error) throw error;
 
         allOrders = data || [];
@@ -220,7 +228,7 @@ async function showOrderDetail(orderId) {
     try {
         const res = await withTimeout(
             sbClient.from('orders').select('*').eq('order_id', orderId).single(),
-            6000,
+            12000,
             '读取订单详情超时'
         );
         data = res.data; error = res.error;
@@ -308,7 +316,7 @@ async function updateOrderStatus(newStatus) {
     try {
         const { error } = await withTimeout(
             sbClient.from('orders').update({ status: newStatus }).eq('order_id', currentOrderData.order_id),
-            8000,
+            12000,
             '更新订单超时'
         );
         if (error) {
@@ -358,7 +366,7 @@ async function loadSettings() {
         try {
             const { data, error } = await withTimeout(
                 sbClient.from('settings').select('key, value'),
-                6000,
+                10000,
                 '读取云端设置超时'
             );
             if (!error && data) {
@@ -532,7 +540,7 @@ async function saveSettings() {
     try {
         const { error } = await withTimeout(
             sbClient.from('settings').upsert(rows, { onConflict: 'key' }),
-            8000,
+            12000,
             '云端保存超时'
         );
         if (error) throw error;
@@ -585,6 +593,10 @@ function changePassword() {
 //  回车键快捷操作
 // ============================================================
 document.addEventListener('DOMContentLoaded', function() {
+    // 刷新后自动恢复登录态（前端模拟登录，localStorage 标记存在即视为已登录）
+    if (localStorage.getItem('admin_logged_in') === '1') {
+        enterDashboard();
+    }
     const si = document.getElementById('searchInput');
     if (si) si.addEventListener('keydown', e => { if (e.key==='Enter') searchOrders(); });
     const lp = document.getElementById('loginPass');
