@@ -31,6 +31,27 @@ function withTimeout(promise, ms, errMsg) {
     ]);
 }
 
+// 图片最大体积（上传预览与实际保存统一使用，避免两处限制不一致造成困惑）
+const MAX_IMG_SIZE = 2 * 1024 * 1024; // 2MB
+
+// HTML 转义：防止订单/设置等外部数据拼入 innerHTML 时引发 XSS 注入
+function escapeHtml(str) {
+    if (str === null || str === undefined) return '';
+    return String(str)
+        .replace(/&/g, '&')
+        .replace(/</g, '<')
+        .replace(/>/g, '>')
+        .replace(/"/g, '"')
+        .replace(/'/g, ''');
+}
+
+// 清洗图片地址：只接受 http(s) 或 base64(data:) 格式，其余清空（防脏数据/注入）
+function cleanImgUrl(val) {
+    if (typeof val !== 'string') return '';
+    if (val.startsWith('http') || val.startsWith('data:')) return val;
+    return '';
+}
+
 // ============================================================
 //  Toast
 // ============================================================
@@ -151,25 +172,25 @@ async function renderOrderList(filterText) {
             const st = statusMap[order.status] || statusMap.pending;
             const payLabel = order.pay_method === 'wechat' ? '微信' : '支付宝';
             const deductLine = (order.coupon_deduct != null)
-                ? `<div class="order-info-row"><span class="order-info-label">充值 ¥${order.recharge} · 券 -¥${order.coupon_deduct}</span><span class="order-info-value"></span></div>`
+                ? `<div class="order-info-row"><span class="order-info-label">充值 ¥${escapeHtml(order.recharge)} · 券 -¥${escapeHtml(order.coupon_deduct)}</span><span class="order-info-value"></span></div>`
                 : '';
             html += `
-                <div class="order-item" onclick="showOrderDetail('${order.order_id}')">
+                <div class="order-item" data-oid="${escapeHtml(order.order_id)}">
                     <div class="order-top">
-                        <span class="order-id">${order.order_id}</span>
+                        <span class="order-id">${escapeHtml(order.order_id)}</span>
                         <span class="order-status ${st.cls}">${st.text}</span>
                     </div>
-                    <div class="order-info-row"><span class="order-info-label">手机号</span><span class="order-info-value">${order.phone||'-'}</span></div>
-                    <div class="order-info-row"><span class="order-info-label">实付金额</span><span class="order-info-value" style="color:#e8941c;font-weight:700;">¥${order.amount}</span></div>
+                    <div class="order-info-row"><span class="order-info-label">手机号</span><span class="order-info-value">${escapeHtml(order.phone||'-')}</span></div>
+                    <div class="order-info-row"><span class="order-info-label">实付金额</span><span class="order-info-value" style="color:#e8941c;font-weight:700;">¥${escapeHtml(order.amount)}</span></div>
                     ${deductLine}
                     <div class="order-info-row"><span class="order-info-label">支付方式</span><span class="order-info-value">${payLabel}</span></div>
-                    <div class="order-info-row"><span class="order-info-label">时间</span><span class="order-info-value" style="font-size:12px;">${formatTime(order.created_at)}</span></div>
+                    <div class="order-info-row"><span class="order-info-label">时间</span><span class="order-info-value" style="font-size:12px;">${escapeHtml(formatTime(order.created_at))}</span></div>
                 </div>`;
         });
         listEl.innerHTML = html;
     } catch(e) {
         console.error('读取订单失败：', e);
-        listEl.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><p>读取失败：${e.message}</p></div>`;
+        listEl.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><p>读取失败：${escapeHtml(e.message)}</p></div>`;
     }
 }
 
@@ -191,11 +212,23 @@ function searchOrders() {
 //  订单详情弹窗（截图从 screenshot_url 显示）
 // ============================================================
 async function showOrderDetail(orderId) {
-    const { data, error } = await sbClient
-        .from('orders')
-        .select('*')
-        .eq('order_id', orderId)
-        .single();
+    if (!sbClient) {
+        showToast('⚠️ 尚未配置 Supabase 凭证，无法读取订单');
+        return;
+    }
+    let data, error;
+    try {
+        const res = await withTimeout(
+            sbClient.from('orders').select('*').eq('order_id', orderId).single(),
+            6000,
+            '读取订单详情超时'
+        );
+        data = res.data; error = res.error;
+    } catch(e) {
+        console.error('读取订单详情失败：', e);
+        showToast('⚠️ 读取订单详情失败：' + (e.message || '未知错误'));
+        return;
+    }
 
     if (error || !data) {
         showToast('❌ 未找到该订单');
@@ -210,23 +243,26 @@ async function showOrderDetail(orderId) {
         rejected: { text:'已拒绝', color:'#dc2626' }
     };
     const st = statusMap[data.status] || statusMap.pending;
+    // 付款截图仅允许 http(s) 或 data: 图片协议，杜绝 javascript: 等危险地址
+    const shotOk = typeof data.screenshot_url === 'string'
+        && (/^https?:\/\//i.test(data.screenshot_url) || /^data:image\//i.test(data.screenshot_url));
 
     let detailHtml = `
-        <div class="detail-row"><span class="detail-label">订单编号</span><span class="detail-value">${data.order_id}</span></div>
-        <div class="detail-row"><span class="detail-label">手机号码</span><span class="detail-value">${data.phone||'-'}</span></div>
-        <div class="detail-row"><span class="detail-label">电子券编号</span><span class="detail-value">${data.coupon_code||'-'}</span></div>
-        <div class="detail-row"><span class="detail-label">充值档位</span><span class="detail-value" style="color:#1e40af;font-weight:700;">¥${data.recharge!=null?data.recharge:data.amount}</span></div>
-        ${data.coupon_deduct!=null ? `<div class="detail-row"><span class="detail-label">代金券抵扣</span><span class="detail-value" style="color:#ef4444;font-weight:700;">-¥${data.coupon_deduct}</span></div>` : ''}
-        <div class="detail-row"><span class="detail-label">实付金额</span><span class="detail-value" style="color:#e8941c;font-weight:700;">¥${data.amount}</span></div>
+        <div class="detail-row"><span class="detail-label">订单编号</span><span class="detail-value">${escapeHtml(data.order_id)}</span></div>
+        <div class="detail-row"><span class="detail-label">手机号码</span><span class="detail-value">${escapeHtml(data.phone||'-')}</span></div>
+        <div class="detail-row"><span class="detail-label">电子券编号</span><span class="detail-value">${escapeHtml(data.coupon_code||'-')}</span></div>
+        <div class="detail-row"><span class="detail-label">充值档位</span><span class="detail-value" style="color:#1e40af;font-weight:700;">¥${escapeHtml(data.recharge!=null?data.recharge:data.amount)}</span></div>
+        ${data.coupon_deduct!=null ? `<div class="detail-row"><span class="detail-label">代金券抵扣</span><span class="detail-value" style="color:#ef4444;font-weight:700;">-¥${escapeHtml(data.coupon_deduct)}</span></div>` : ''}
+        <div class="detail-row"><span class="detail-label">实付金额</span><span class="detail-value" style="color:#e8941c;font-weight:700;">¥${escapeHtml(data.amount)}</span></div>
         <div class="detail-row"><span class="detail-label">支付方式</span><span class="detail-value">${payLabel}</span></div>
         <div class="detail-row"><span class="detail-label">订单状态</span><span class="detail-value" style="color:${st.color};font-weight:700;">${st.text}</span></div>
-        <div class="detail-row"><span class="detail-label">提交时间</span><span class="detail-value">${formatTime(data.created_at)}</span></div>`;
+        <div class="detail-row"><span class="detail-label">提交时间</span><span class="detail-value">${escapeHtml(formatTime(data.created_at))}</span></div>`;
 
-    if (data.screenshot_url) {
+    if (shotOk) {
         detailHtml += `
             <div style="margin-top:14px;">
                 <p style="font-size:13px;color:#64748b;margin-bottom:6px;">📷 付款凭证截图：</p>
-                <img class="detail-screenshot" src="${data.screenshot_url}" alt="付款截图">
+                <img class="detail-screenshot" src="${escapeHtml(data.screenshot_url)}" alt="付款截图" onerror="this.style.display='none'">
             </div>`;
     }
 
@@ -254,25 +290,39 @@ function closeModal() {
 document.getElementById('orderModal').addEventListener('click', function(e) {
     if (e.target === this) closeModal();
 });
+// 订单列表点击委托：根据 data-oid 打开详情，避免内联 onclick 拼接 order_id 引发 XSS
+document.getElementById('orderList').addEventListener('click', function(e) {
+    const item = e.target.closest('.order-item');
+    if (item && item.dataset.oid) showOrderDetail(item.dataset.oid);
+});
 
 // ============================================================
 //  修改订单状态（更新 Supabase）
 // ============================================================
 async function updateOrderStatus(newStatus) {
     if (!currentOrderData) return;
-    const { error } = await sbClient
-        .from('orders')
-        .update({ status: newStatus })
-        .eq('order_id', currentOrderData.order_id);
-
-    if (error) {
-        showToast('❌ 更新失败：' + error.message);
+    if (!sbClient) {
+        showToast('⚠️ 尚未配置 Supabase 凭证，无法更新订单');
         return;
     }
-    const msg = newStatus === 'approved' ? '✅ 已标记为通过' : '❌ 已标记为拒绝';
-    showToast(msg);
-    closeModal();
-    renderOrderList();
+    try {
+        const { error } = await withTimeout(
+            sbClient.from('orders').update({ status: newStatus }).eq('order_id', currentOrderData.order_id),
+            8000,
+            '更新订单超时'
+        );
+        if (error) {
+            showToast('❌ 更新失败：' + error.message);
+            return;
+        }
+        const msg = newStatus === 'approved' ? '✅ 已标记为通过' : '❌ 已标记为拒绝';
+        showToast(msg);
+        closeModal();
+        renderOrderList();
+    } catch(e) {
+        console.error('更新订单失败：', e);
+        showToast('⚠️ 更新订单失败：' + (e.message || '未知错误'));
+    }
 }
 
 // ============================================================
@@ -326,8 +376,8 @@ async function loadSettings() {
 function readImageAsDataUrl(file) {
     return new Promise((resolve, reject) => {
         if (!file) { resolve(null); return; }
-        // 限制大小，避免 base64 过大撑爆浏览器本地存储
-        if (file.size > 3 * 1024 * 1024) { reject(new Error('图片超过 3MB，请压缩后再上传')); return; }
+        // 限制大小，避免 base64 过大撑爆浏览器本地存储（与预览限制保持一致）
+        if (file.size > MAX_IMG_SIZE) { reject(new Error('图片超过 2MB，请压缩后再上传')); return; }
         const reader = new FileReader();
         reader.onload = () => resolve(reader.result);   // 结果是 base64 DataURL，可直接当图片地址用
         reader.onerror = () => reject(new Error('图片读取失败'));
@@ -347,12 +397,9 @@ function collectFormSettings() {
     const wechatPreview = document.getElementById('previewWechat');
     const alipayPreview = document.getElementById('previewAlipay');
     const logoPreview = document.getElementById('previewLogo');
-    let wechatUrl = wechatPreview ? wechatPreview.src : '';
-    let alipayUrl = alipayPreview ? alipayPreview.src : '';
-    let logoUrl = logoPreview ? logoPreview.src : '';
-    if (!wechatUrl || (!wechatUrl.startsWith('http') && !wechatUrl.startsWith('data:'))) wechatUrl = '';
-    if (!alipayUrl || (!alipayUrl.startsWith('http') && !alipayUrl.startsWith('data:'))) alipayUrl = '';
-    if (!logoUrl || (!logoUrl.startsWith('http') && !logoUrl.startsWith('data:'))) logoUrl = '';
+    let wechatUrl = cleanImgUrl(wechatPreview ? wechatPreview.src : '');
+    let alipayUrl = cleanImgUrl(alipayPreview ? alipayPreview.src : '');
+    let logoUrl = cleanImgUrl(logoPreview ? logoPreview.src : '');
 
     const rows = [
         { key: 'site_name',   value: document.getElementById('setSiteName').value.trim() },
@@ -373,7 +420,14 @@ function collectFormSettings() {
 function saveToLocal(rows) {
     const map = {};
     rows.forEach(r => { map[r.key] = r.value; });
-    localStorage.setItem('admin_settings_cache', JSON.stringify(map));
+    try {
+        localStorage.setItem('admin_settings_cache', JSON.stringify(map));
+        return true;
+    } catch(e) {
+        console.error('本地存储写入失败（图片可能过大，超出浏览器配额）：', e);
+        showToast('⚠️ 本地保存失败：图片总大小可能超出浏览器限制，请压缩图片后再保存');
+        return false;
+    }
 }
 
 // ============ 从 localStorage 读取兜底 ============
@@ -457,9 +511,9 @@ async function saveSettings() {
             showToast('⚠️ Logo 上传失败，其他设置继续保存…');
         }
     }
-    if (!wechatUrl || (!wechatUrl.startsWith('http') && !wechatUrl.startsWith('data:'))) wechatUrl = '';
-    if (!alipayUrl || (!alipayUrl.startsWith('http') && !alipayUrl.startsWith('data:'))) alipayUrl = '';
-    if (!logoUrl || (!logoUrl.startsWith('http') && !logoUrl.startsWith('data:'))) logoUrl = '';
+    wechatUrl = cleanImgUrl(wechatUrl);
+    alipayUrl = cleanImgUrl(alipayUrl);
+    logoUrl = cleanImgUrl(logoUrl);
 
     // 更新 rows 中的 URL
     rows.forEach(r => { if (r.key === 'wechat_qr') r.value = wechatUrl; });
