@@ -38,11 +38,11 @@ const MAX_IMG_SIZE = 2 * 1024 * 1024; // 2MB
 function escapeHtml(str) {
     if (str === null || str === undefined) return '';
     return String(str)
-        .replace(/&/g, '&')
-        .replace(/</g, '<')
-        .replace(/>/g, '>')
-        .replace(/"/g, '"')
-        .replace(/'/g, ''');
+        .replace(/&/g, '&' + 'amp;')
+        .replace(/</g, '&' + 'lt;')
+        .replace(/>/g, '&' + 'gt;')
+        .replace(/"/g, '&' + 'quot;')
+        .replace(/'/g, '&' + '#39;');
 }
 
 // 清洗图片地址：只接受 http(s) 或 base64(data:) 格式，其余清空（防脏数据/注入）
