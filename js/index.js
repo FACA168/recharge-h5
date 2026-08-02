@@ -260,18 +260,157 @@ function base64ToFile(dataUrl) {
     return new Blob([u8arr], { type: mime });
 }
 
+// ============ 领取代金券 ============
+async function claimCoupon() {
+    const phone = document.getElementById('phoneInput').value.trim();
+    
+    if (!phone) {
+        showToast('⚠️ 请输入手机号码');
+        return;
+    }
+    
+    if (!validatePhone(phone)) {
+        showToast('❌ 手机号格式错误，请输入11位手机号');
+        return;
+    }
+    
+    currentPhone = phone;
+    couponCode = generateCouponCode();
+    
+    const statusEl = document.getElementById('statusText1');
+    const nextBtn = document.getElementById('nextBtn1');
+    const claimBtn = document.getElementById('claimBtn');
+    
+    // 显示加载中
+    claimBtn.disabled = true;
+    claimBtn.textContent = '领取中...';
+    statusEl.innerHTML = '<span class="status-dot"></span> 正在生成代金券...';
+    
+    try {
+        // 保存到数据库
+        if (sbClient) {
+            await withTimeout(
+                sbClient.from('coupons').insert({
+                    phone: phone,
+                    coupon_code: couponCode,
+                    status: 'active',
+                    created_at: new Date().toISOString()
+                }),
+                10000,
+                '保存代金券超时'
+            );
+        }
+        
+        // 成功
+        statusEl.innerHTML = '<span class="status-dot" style="background:#16A34A"></span> 代金券领取成功！';
+        statusEl.className = 'status-text status-success';
+        nextBtn.disabled = false;
+        claimBtn.style.display = 'none';
+        
+        showToast('✅ 代金券已领取！');
+        
+    } catch(e) {
+        console.error('领取代金券失败：', e);
+        statusEl.innerHTML = '<span class="status-dot"></span> 领取失败，请重试';
+        claimBtn.disabled = false;
+        claimBtn.textContent = '立即领取电子代金券';
+        showToast('❌ 领取失败：' + e.message);
+    }
+}
+
+// ============ 切换步骤 ============
+function goStep(step) {
+    // 隐藏所有步骤
+    document.querySelectorAll('.page-section').forEach(el => {
+        el.classList.remove('active');
+    });
+    
+    // 显示目标步骤
+    const targetEl = document.getElementById('step' + step);
+    if (targetEl) {
+        targetEl.classList.add('active');
+        window.scrollTo(0, 0);
+    }
+    
+    // 如果是第二步，更新摘要
+    if (step === 2) {
+        updateOrderSummary();
+    }
+}
+
+// ============ 更新订单摘要 ============
+function updateOrderSummary() {
+    document.getElementById('sumOrderId').textContent = 'ORD' + Date.now().toString().slice(-8);
+    document.getElementById('sumCouponCode').textContent = couponCode;
+    document.getElementById('sumRecharge').textContent = '¥' + selectedRecharge;
+    document.getElementById('sumPay').textContent = '¥' + selectedAmount;
+}
+
+// ============ 选择充值金额 ============
+function selectAmount(item) {
+    // 移除所有选中状态
+    document.querySelectorAll('.amount-item').forEach(el => {
+        el.classList.remove('selected');
+    });
+    
+    // 添加选中状态
+    item.classList.add('selected');
+    
+    // 更新数据
+    selectedRecharge = parseInt(item.dataset.recharge) || 200;
+    selectedCoupon = parseInt(item.dataset.coupon) || 0;
+    selectedAmount = parseInt(item.dataset.pay) || 170;
+    
+    // 更新摘要
+    updateOrderSummary();
+}
+
+// ============ 选择支付方式 ============
+function selectPay(methodEl) {
+    // 移除所有选中状态
+    document.querySelectorAll('.pay-method').forEach(el => {
+        el.classList.remove('selected');
+    });
+    
+    // 添加选中状态
+    methodEl.classList.add('selected');
+    
+    // 更新支付方式
+    selectedPayMethod = methodEl.dataset.pay || 'wechat';
+}
+
+// ============ 联系客服 ============
+function contactKefu() {
+    const kefuLink = document.getElementById('kefuLink');
+    if (kefuLink) {
+        kefuLink.click();
+    } else {
+        showToast('请联系客服');
+    }
+}
+
+// ============ 返回首页 ============
+function goHome() {
+    window.location.reload();
+}
+
 // ============ 初始化 ============
 document.addEventListener('DOMContentLoaded', function() {
-    updateRechargeOptions();
-    calculateAmount();
+    updateOrderSummary();
     loadSettings();
     
-    // 支付方式切换
-    document.querySelectorAll('.pay-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            document.querySelectorAll('.pay-btn').forEach(b => b.classList.remove('active'));
-            this.classList.add('active');
-            selectedPayMethod = this.dataset.method;
-        });
-    });
+    // 上传截图
+    document.getElementById('fileInput')?.addEventListener('change', handleUpload);
+    
+    // 选择充值金额（默认选中第一个）
+    const firstAmount = document.querySelector('.amount-item');
+    if (firstAmount) {
+        firstAmount.classList.add('selected');
+    }
+    
+    // 选择支付方式（默认选中微信）
+    const firstPay = document.querySelector('.pay-method');
+    if (firstPay) {
+        firstPay.classList.add('selected');
+    }
 });
