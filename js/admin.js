@@ -38,11 +38,11 @@ const MAX_IMG_SIZE = 2 * 1024 * 1024; // 2MB
 function escapeHtml(str) {
     if (str === null || str === undefined) return '';
     return String(str)
-        .replace(/&/g, '&' + 'amp;')
-        .replace(/</g, '&' + 'lt;')
-        .replace(/>/g, '&' + 'gt;')
-        .replace(/"/g, '&' + 'quot;')
-        .replace(/'/g, '&' + '#39;');
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
 }
 
 // 清洗图片地址：只接受 http(s) 或 base64(data:) 格式，其余清空（防脏数据/注入）
@@ -513,61 +513,51 @@ async function saveSettings() {
     let logoUrl = rows.find(r => r.key === 'logo_url') ? (rows.find(r => r.key === 'logo_url').value || '') : '';
 
     if (wechatFile) {
-        try { wechatUrl = await uploadQr(wechatFile, 'wechat'); } catch(e) {
-            console.warn('微信收款码上传失败：', e);
-            showToast('⚠️ 微信收款码上传失败，其他设置继续保存…');
-        }
+        wechatUrl = await uploadQr(wechatFile, 'wechat') || wechatUrl;
     }
     if (alipayFile) {
-        try { alipayUrl = await uploadQr(alipayFile, 'alipay'); } catch(e) {
-            console.warn('支付宝收款码上传失败：', e);
-            showToast('⚠️ 支付宝收款码上传失败，其他设置继续保存…');
-        }
+        alipayUrl = await uploadQr(alipayFile, 'alipay') || alipayUrl;
     }
     if (logoFile) {
-        try { logoUrl = await uploadQr(logoFile, 'logo'); } catch(e) {
-            console.warn('Logo 上传失败：', e);
-            showToast('⚠️ Logo 上传失败，其他设置继续保存…');
-        }
-    }
-    wechatUrl = cleanImgUrl(wechatUrl);
-    alipayUrl = cleanImgUrl(alipayUrl);
-    logoUrl = cleanImgUrl(logoUrl);
-
-    // 更新 rows 中的 URL
-    rows.forEach(r => { if (r.key === 'wechat_qr') r.value = wechatUrl; });
-    rows.forEach(r => { if (r.key === 'alipay_qr') r.value = alipayUrl; });
-    rows.forEach(r => { if (r.key === 'logo_url') r.value = logoUrl; });
-
-    // 再次更新本地缓存（含上传后的 URL）
-    saveToLocal(rows);
-
-    // 尝试写入 Supabase
-    if (!sbClient) {
-        showToast('✅ 设置已保存到本地（Supabase 未配置）');
-        return;
+        logoUrl = await uploadQr(logoFile, 'logo') || logoUrl;
     }
 
-    try {
-        const { error } = await withTimeout(
-            sbClient.from('settings').upsert(rows, { onConflict: 'key' }),
-            12000,
-            '云端保存超时'
-        );
-        if (error) throw error;
-        showToast('✅ 所有设置已保存！前台将自动生效');
-    } catch(e) {
-        console.error('Supabase 保存失败，已使用本地缓存：', e);
-        // Supabase 不可用时，localStorage 已经存好了，提示用户
-        let msg = e.message || '未知错误';
-        if (msg.includes('Failed to fetch') || msg.includes('NetworkError') || msg.includes('SSL_ERROR')) {
-            showToast('✅ 已保存到本机浏览器（云端暂不可用，恢复后点保存即可同步）');
-        } else if (msg.includes('No content')) {
-            showToast('⚠️ 部分设置项为空或格式异常（已存本地）');
-        } else if (msg.includes('permission') || msg.includes('RLS')) {
-            showToast('❌ 数据库权限异常（已存本地）：' + msg);
-        } else {
-            showToast('⚠️ 云端保存失败，已使用本地缓存：' + msg);
+    // 把最新的图片 URL 写回 rows
+    rows.push(
+        { key: 'wechat_qr', value: wechatUrl },
+        { key: 'alipay_qr', value: alipayUrl },
+        { key: 'logo_url', value: logoUrl }
+    );
+    // 去重：相同 key 只保留最后一个
+    const seen = new Set();
+    const deduped = rows.filter(r => {
+        if (seen.has(r.key)) return false;
+        seen.add(r.key);
+        return true;
+    });
+
+    // 同步到 Supabase
+    if (sbClient) {
+        try {
+            const { error } = await withTimeout(
+                sbClient.from('settings').upsert(deduped, { onConflict: 'key' }),
+                15000,
+                '保存设置超时'
+            );
+            if (error) throw error;
+            showToast('✅ 设置已保存！');
+        } catch(e) {
+            // Supabase 不可用时，localStorage 已经存好了，提示用户
+            let msg = e.message || '未知错误';
+            if (msg.includes('Failed to fetch') || msg.includes('NetworkError') || msg.includes('SSL_ERROR')) {
+                showToast('✅ 已保存到本机浏览器（云端暂不可用，恢复后点保存即可同步）');
+            } else if (msg.includes('No content')) {
+                showToast('⚠️ 部分设置项为空或格式异常（已存本地）');
+            } else if (msg.includes('permission') || msg.includes('RLS')) {
+                showToast('❌ 数据库权限异常（已存本地）：' + msg);
+            } else {
+                showToast('⚠️ 云端保存失败，已使用本地缓存：' + msg);
+            }
         }
     }
 }

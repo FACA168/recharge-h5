@@ -48,322 +48,230 @@ function withTimeout(promise, ms, errMsg) {
     ]);
 }
 
-// ============ 页面切换 ============
-function goStep(stepNum) {
-    document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active'));
-    document.getElementById('step' + stepNum).classList.add('active');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    if (stepNum === 2) {
-        if (!currentOrderId) {
-            currentOrderId = generateOrderId();
-            document.getElementById('sumOrderId').textContent = currentOrderId;
-        }
-        updateQrCode();
-    }
-    if (stepNum === 3) { updateQrCode(); }
+// HTML 转义
+function escapeHtml(str) {
+    if (str === null || str === undefined) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
 }
 
-// ============ 第一步：领取代金券 ============
-async function claimCoupon() {
-    const phoneInput = document.getElementById('phoneInput');
-    const claimBtn = document.getElementById('claimBtn');
-    const statusText = document.getElementById('statusText1');
-    const nextBtn = document.getElementById('nextBtn1');
+// 清洗图片地址
+function cleanImgUrl(val) {
+    if (typeof val !== 'string') return '';
+    if (val.startsWith('http') || val.startsWith('data:')) return val;
+    return '';
+}
 
-    let phone = phoneInput.value.trim();
-    if (!phone) { showToast('请先输入手机号码'); phoneInput.focus(); return; }
-    if (!validatePhone(phone)) { showToast('手机号格式不正确'); phoneInput.value = ''; phoneInput.focus(); return; }
-
-    claimBtn.disabled = true;
-    claimBtn.innerHTML = '正在领取...';
-    statusText.innerHTML = '<span class="status-dot"></span> 正在生成电子券...';
-
+// ============ 加载设置 ============
+async function loadSettings() {
+    if (!sbClient) { console.warn('未配置 Supabase'); return; }
     try {
-        await new Promise(r => setTimeout(r, 1200));
-        currentPhone = phone;
-        couponCode = generateCouponCode();
-        claimBtn.innerHTML = '已成功领取';
-        statusText.innerHTML = '<span class="status-dot"></span> 代金券已发放至您的账户';
-        statusText.classList.add('status-success');
-        nextBtn.disabled = false;
-        document.getElementById('sumCouponCode').textContent = couponCode;
-        if (currentOrderId) document.getElementById('sumOrderId').textContent = currentOrderId;
-        showToast('恭喜！代金券领取成功！');
+        const { data, error } = await withTimeout(
+            sbClient.from('settings').select('key, value'),
+            10000,
+            '读取设置超时'
+        );
+        if (error) throw error;
+        if (data) {
+            data.forEach(r => { settingsCache[r.key] = r.value; });
+            applySettings();
+        }
     } catch(e) {
-        claimBtn.disabled = false;
-        claimBtn.innerHTML = '立即领取电子代金券';
-        statusText.innerHTML = '<span class="status-dot"></span> 领取失败，请重试';
-        showToast('领取失败，请稍后重试');
+        console.warn('加载设置失败：', e);
     }
 }
 
-// ============ 第二步：选择金额 ============
-function selectAmount(el) {
-    document.querySelectorAll('.amount-item').forEach(i => i.classList.remove('selected'));
-    el.classList.add('selected');
-    selectedRecharge = parseInt(el.dataset.recharge);
-    selectedCoupon = parseInt(el.dataset.coupon);
-    selectedAmount = parseInt(el.dataset.pay);
-
-    const summaryRows = document.querySelectorAll('#orderSummary .summary-row');
-    summaryRows[2].innerHTML = '<span class="summary-label">充值金额</span><span class="summary-value">¥' + selectedRecharge + '</span>';
-    summaryRows[3].innerHTML = '<span class="summary-label">代金券优惠</span><span class="summary-value" style="color:#16A34A;">- ¥' + selectedCoupon + '</span>';
-    summaryRows[4].innerHTML = '<span class="summary-label">实付金额</span><span class="summary-value summary-highlight">¥' + selectedAmount + '</span>';
+function applySettings() {
+    const siteName = settingsCache['site_name'] || '充值中心';
+    document.title = siteName + ' - 管理后台';
+    const notice = settingsCache['notice'];
+    if (notice) {
+        const noticeEl = document.getElementById('noticeBar');
+        if (noticeEl) { noticeEl.textContent = notice; noticeEl.style.display = 'block'; }
+    }
+    const banner = settingsCache['banner'];
+    if (banner) {
+        const bannerEl = document.getElementById('bannerImg');
+        if (bannerEl) { bannerEl.src = cleanImgUrl(banner); bannerEl.style.display = 'block'; }
+    }
+    const kefuName = settingsCache['kefu_name'];
+    const kefuLink = settingsCache['kefu_link'];
+    if (kefuName && kefuLink) {
+        const linkEl = document.getElementById('kefuLink');
+        if (linkEl) { linkEl.textContent = kefuName; linkEl.href = cleanImgUrl(kefuLink); }
+    }
+    const maintenance = settingsCache['maintenance'];
+    if (maintenance === 'on') {
+        document.getElementById('rechargeForm').style.opacity = '0.5';
+        document.getElementById('rechargeForm').style.pointerEvents = 'none';
+        showToast('⚠️ 系统维护中，暂停充值');
+    }
 }
 
-// ============ 第二步：选择支付方式 ============
-function selectPay(el) {
-    document.querySelectorAll('.pay-method').forEach(m => m.classList.remove('selected'));
-    el.classList.add('selected');
-    selectedPayMethod = el.dataset.pay;
-    updateQrCode();
+// ============ 充值档位 & 优惠券联动 ============
+const rechargeOptions = [
+    { value: 100, discount: 0 },
+    { value: 200, discount: 28 },
+    { value: 300, discount: 58 },
+    { value: 500, discount: 128 },
+    { value: 1000, discount: 180 }
+];
+
+function updateRechargeOptions() {
+    const select = document.getElementById('rechargeSelect');
+    select.innerHTML = '';
+    rechargeOptions.forEach(opt => {
+        const option = document.createElement('option');
+        option.value = opt.value;
+        option.textContent = `充值 ¥${opt.value}`;
+        if (opt.value === selectedRecharge) option.selected = true;
+        select.appendChild(option);
+    });
+    calculateAmount();
 }
 
-// ============ 显示收款码 ============
-function updateQrCode() {
-    const qrPlaceholder = document.getElementById('qrPlaceholder');
-    const qrImage = document.getElementById('qrImage');
-    const qrTip = document.getElementById('qrTip');
+function calculateAmount() {
+    const recharge = parseInt(document.getElementById('rechargeSelect').value) || 200;
+    const coupon = parseInt(document.getElementById('couponSelect').value) || 0;
+    const discount = rechargeOptions.find(o => o.value === recharge)?.discount || 0;
+    const amount = Math.max(0, recharge - discount - coupon);
+    selectedRecharge = recharge;
+    selectedCoupon = coupon;
+    selectedAmount = amount;
+    document.getElementById('amountDisplay').textContent = '¥' + amount;
+}
 
-    const wechatQr = settingsCache['wechat_qr'] || '';
-    const alipayQr = settingsCache['alipay_qr'] || '';
+document.getElementById('rechargeSelect')?.addEventListener('change', calculateAmount);
+document.getElementById('couponSelect')?.addEventListener('change', calculateAmount);
 
-    if (selectedPayMethod === 'wechat') {
-        qrTip.textContent = '请使用微信扫码付款';
-        if (wechatQr) { qrPlaceholder.style.display = 'none'; qrImage.style.display = 'block'; qrImage.src = wechatQr; }
-        else { qrPlaceholder.style.display = 'flex'; qrPlaceholder.innerHTML = '<span>微信收款码<br>(管理员未设置)</span>'; qrImage.style.display = 'none'; }
+// ============ 手机号 & 优惠券验证 ============
+document.getElementById('phoneInput')?.addEventListener('input', function() {
+    const phone = this.value.trim();
+    if (phone && !validatePhone(phone)) {
+        showToast('❌ 手机号格式错误');
+        this.setCustomValidity('invalid');
     } else {
-        qrTip.textContent = '请使用支付宝扫码付款';
-        if (alipayQr) { qrPlaceholder.style.display = 'none'; qrImage.style.display = 'block'; qrImage.src = alipayQr; }
-        else { qrPlaceholder.style.display = 'flex'; qrPlaceholder.innerHTML = '<span>支付宝收款码<br>(管理员未设置)</span>'; qrImage.style.display = 'none'; }
+        this.setCustomValidity('');
     }
-}
+});
 
-// ============ 处理截图上传（file input 覆盖层，原生 change 触发）============
+// ============ 上传截图 ============
 function handleUpload(event) {
     const file = event.target.files[0];
     if (!file) return;
     if (file.size > 5 * 1024 * 1024) { showToast('图片大小不能超过5MB'); event.target.value = ''; return; }
-
-    uploadedFile = file;
+    
     const reader = new FileReader();
-    reader.onload = function(ev) {
+    reader.onload = function(e) {
+        uploadedFile = e.target.result;
         const preview = document.getElementById('previewImg');
-        preview.src = ev.target.result; preview.classList.add('show');
-        document.getElementById('uploadArea').classList.add('has-image');
-        document.getElementById('uploadIcon').style.display = 'none';
-        document.getElementById('uploadText').textContent = '点击重新选择图片';
-        document.getElementById('statusText3').innerHTML = '<span class="status-dot"></span> 截图已选择，可提交订单';
-        document.getElementById('statusText3').classList.add('status-success');
-        showToast('截图已选择');
+        preview.src = uploadedFile;
+        preview.classList.add('show');
+        document.getElementById('uploadText').textContent = '✅ 已选择图片，点击可重新选择';
     };
     reader.readAsDataURL(file);
 }
 
-// file input 覆盖层直接绑定 change（用户点击物理命中 input，浏览器原生触发，不依赖 JS .click()）
-document.addEventListener('DOMContentLoaded', function() {
-    const fi = document.getElementById('fileInput');
-    if (fi) fi.addEventListener('change', handleUpload);
-});
-
-// ============ 提交订单（点完直接跳第4步） ============
+// ============ 提交订单 ============
 async function submitOrder() {
-    if (!uploadedFile) { showToast('请先上传付款截图'); return; }
-
-    // 确保订单编号存在
-    if (!currentOrderId) currentOrderId = generateOrderId();
-
-    // 先设置订单编号，再跳页
-    document.getElementById('resultOrderId').textContent = '订单编号：' + currentOrderId;
-    document.getElementById('resultOrderIdFail').textContent = '订单编号：' + currentOrderId;
-
-    // 直接跳到第4步（加载页）
-    goStep(4);
-
-    let failReason = '网络异常，请联系在线客服';
-
+    const phone = document.getElementById('phoneInput').value.trim();
+    const couponCode = document.getElementById('couponSelect').value;
+    
+    if (!phone || !validatePhone(phone)) {
+        showToast('❌ 请输入正确的手机号');
+        return;
+    }
+    
+    if (!uploadedFile) {
+        showToast('❌ 请上传付款截图');
+        return;
+    }
+    
+    if (!sbClient) {
+        showToast('⚠️ 未配置数据库');
+        return;
+    }
+    
+    const orderId = generateOrderId();
+    const coupon = generateCouponCode();
+    
     try {
-        if (!sbClient) {
-            failReason = '系统维护中，请联系在线客服';
-            throw new Error(failReason);
-        }
-
-        const orderId = currentOrderId;
-        const fileExt = uploadedFile.name.split('.').pop() || 'jpg';
-        const filePath = `order_${orderId}_${Date.now()}.${fileExt}`;
-
-        // 带超时的上传
-        const uploadPromise = sbClient.storage.from('screenshots').upload(filePath, uploadedFile, { upsert: false });
-        const { error: upErr } = await withTimeout(uploadPromise, 8000, '上传超时');
-        if (upErr) throw upErr;
-
-        const { data: urlData } = sbClient.storage.from('screenshots').getPublicUrl(filePath);
-        const screenshotUrl = urlData.publicUrl;
-
-        // 带超时的插入
-        const insertPromise = sbClient.from('orders').insert({
-            order_id: orderId, phone: currentPhone, coupon_code: couponCode,
-            recharge: selectedRecharge, coupon_deduct: selectedCoupon, amount: selectedAmount,
-            pay_method: selectedPayMethod, screenshot_url: screenshotUrl, status: 'pending'
-        });
-        const { error: insErr } = await withTimeout(insertPromise, 8000, '写入超时');
-        if (insErr) throw insErr;
-
-        failReason = '充值失败，请联系在线客服';
-    } catch(e) {
-        console.error('提交异常：', e);
-        failReason = e.message || '网络错误，请联系在线客服';
-        if (failReason.includes('Invalid') || failReason.includes('JWS')) failReason = '系统配置异常，请联系在线客服';
-        if (failReason.includes('timeout') || failReason.includes('Timeout')) failReason = '网络连接超时，请联系在线客服';
-    }
-
-    // 在第4步跑小点加载动画，然后显示结果
-    await runFakeProgress(failReason);
-}
-
-// ============ 小点加载动画（5秒） ============
-async function runFakeProgress(failReason) {
-    const text = document.getElementById('progressText');
-    document.getElementById('resultProgressState').style.display = 'block';
-    document.getElementById('resultFailState').style.display = 'none';
-
-    const steps = [
-        '正在验证订单信息…',
-        '正在连接支付渠道…',
-        '正在确认收款状态…',
-        '正在为您充值…',
-        '处理完成'
-    ];
-
-    for (const t of steps) {
-        text.textContent = t;
-        await new Promise(r => setTimeout(r, 1000));
-    }
-
-    showFailState(failReason);
-}
-
-// ============ 失败状态 ============
-function showFailState(reason) {
-    document.getElementById('resultProgressState').style.display = 'none';
-    document.getElementById('resultFailState').style.display = 'block';
-}
-
-// ============ 联系客服（直接跳转后台设置的链接） ============
-function contactKefu() {
-    // 优先从内存缓存读取，其次从 localStorage 兜底（Supabase 不可用时也能跳转）
-    let kefuLink = settingsCache['kefu_link'] || '';
-    if (!kefuLink) {
-        try {
-            const localRaw = localStorage.getItem('admin_settings_cache');
-            if (localRaw) {
-                const localMap = JSON.parse(localRaw);
-                kefuLink = localMap['kefu_link'] || '';
-            }
-        } catch(e) {}
-    }
-    if (kefuLink) {
-        // 直接跳转后台设置的客服链接
-        window.location.href = kefuLink;
-    } else {
-        // 后台还没设置客服链接时，提示一下
-        showToast('客服链接尚未配置，请联系管理员');
-    }
-}
-
-// ============ 返回首页 ============
-function resetAll() {
-    currentPhone = ''; couponCode = ''; selectedPayMethod = 'wechat'; uploadedFile = null; currentOrderId = '';
-    document.getElementById('phoneInput').value = '';
-    document.getElementById('claimBtn').disabled = false;
-    document.getElementById('claimBtn').innerHTML = '立即领取电子代金券';
-    document.getElementById('statusText1').innerHTML = '<span class="status-dot"></span> 等待操作中...';
-    document.getElementById('statusText1').classList.remove('status-success');
-    document.getElementById('nextBtn1').disabled = true;
-
-    document.querySelectorAll('.amount-item').forEach((item, idx) => item.classList.toggle('selected', idx === 0));
-    document.querySelectorAll('.pay-method').forEach((m, idx) => m.classList.toggle('selected', idx === 0));
-    selectedRecharge = 200; selectedCoupon = 28; selectedAmount = 172;
-
-    document.getElementById('sumOrderId').textContent = '-';
-    document.getElementById('sumCouponCode').textContent = '-';
-    document.getElementById('sumRecharge').textContent = '¥200';
-    const sr = document.querySelectorAll('#orderSummary .summary-row');
-    sr[3].innerHTML = '<span class="summary-label">代金券优惠</span><span class="summary-value" style="color:#16A34A;">- ¥28</span>';
-    sr[4].innerHTML = '<span class="summary-label">实付金额</span><span class="summary-value summary-highlight">¥172</span>';
-
-    document.getElementById('previewImg').classList.remove('show');
-    document.getElementById('previewImg').src = '';
-    document.getElementById('uploadArea').classList.remove('has-image');
-    document.getElementById('uploadIcon').style.display = '';
-    document.getElementById('uploadText').textContent = '点击上传付款截图凭证';
-    document.getElementById('submitBtn').disabled = false;
-    document.getElementById('submitBtn').innerHTML = '我已支付，提交充值';
-    document.getElementById('statusText3').innerHTML = '<span class="status-dot"></span> 请上传付款截图后提交';
-    document.getElementById('statusText3').classList.remove('status-success');
-    document.getElementById('statusText3').style.display = '';
-
-    document.getElementById('resultProgressState').style.display = 'block';
-    document.getElementById('resultFailState').style.display = 'none';
-
-    goStep(1);
-}
-
-function goHome() {
-    if (document.getElementById('step1').classList.contains('active')) showToast('当前已在首页');
-    else { showToast('返回首页'); resetAll(); }
-}
-
-// ============ 套用设置到前台界面 ============
-// 抽成独立函数，本地缓存/云端读取后都可调用，避免界面因云端请求挂起而迟迟不刷新
-function applySettingsToUI() {
-    if (settingsCache['site_name']) { document.getElementById('siteTitle').textContent = settingsCache['site_name']; document.title = settingsCache['site_name']; }
-    if (settingsCache['notice']) { document.getElementById('noticeText').textContent = settingsCache['notice']; }
-    if (settingsCache['banner']) { document.getElementById('bannerText').innerHTML = settingsCache['banner']; }
-    // 维护模式：后台开启后前台直接显示"暂停服务"遮罩
-    if (settingsCache['maintenance'] === 'on') {
-        const mo = document.getElementById('maintenanceOverlay');
-        if (mo) mo.style.display = 'flex';
-    }
-    // 网站 Logo：后台上传了就用图片，否则用默认加油图标
-    if (settingsCache['logo_url']) {
-        const logoImg = document.getElementById('logoImg');
-        const logoSvg = document.getElementById('logoSvg');
-        if (logoImg && logoSvg) {
-            logoImg.src = settingsCache['logo_url'];
-            logoImg.style.display = 'block';
-            logoSvg.style.display = 'none';
-        }
-    }
-}
-
-// ============ 加载设置 ============
-window.addEventListener('DOMContentLoaded', async function() {
-    // 先从本地缓存兜底（Supabase 不可用时也能用），读取后立即套用界面
-    try {
-        const localRaw = localStorage.getItem('admin_settings_cache');
-        if (localRaw) {
-            const localMap = JSON.parse(localRaw);
-            Object.keys(localMap).forEach(k => { settingsCache[k] = localMap[k]; });
-            console.log('⚠️ 前台使用本地缓存的设置（Supabase 可能不可用）');
-        }
-    } catch(e) {}
-    // 关键：本地缓存读取后立即上屏，不等待云端，避免 Supabase 挂掉时界面空白
-    applySettingsToUI();
-
-    // 再用 Supabase 覆盖（云端优先），带超时防止请求挂起卡住页面
-    try {
-        if (!sbClient) return;
-        const { data, error } = await withTimeout(
-            sbClient.from('settings').select('key, value'),
-            6000,
-            '读取云端设置超时'
+        // 上传截图
+        const fileName = `order_${orderId}_${Date.now()}.jpg`;
+        const { error: uploadError } = await withTimeout(
+            sbClient.storage.from('screenshots').upload(fileName, base64ToFile(uploadedFile), { contentType: 'image/jpeg' }),
+            30000,
+            '上传截图超时'
         );
-        if (!error && data) {
-            data.forEach(row => { settingsCache[row.key] = row.value; });
-            applySettingsToUI(); // 云端成功后再次套用，覆盖本地缓存
-        } else if (error) console.warn('读取设置失败：', error.message);
-    } catch(e) { console.warn('Supabase 连接异常：', e); }
-});
+        
+        if (uploadError) throw uploadError;
+        
+        // 获取公开URL
+        const { data: urlData } = sbClient.storage.from('screenshots').getPublicUrl(fileName);
+        const screenshotUrl = urlData?.publicUrl || '';
+        
+        // 保存订单
+        const { error: insertError } = await withTimeout(
+            sbClient.from('orders').insert({
+                order_id: orderId,
+                phone: phone,
+                coupon_code: coupon,
+                recharge: selectedRecharge,
+                coupon_deduct: selectedCoupon,
+                amount: selectedAmount,
+                pay_method: selectedPayMethod,
+                screenshot_url: screenshotUrl,
+                status: 'pending'
+            }),
+            15000,
+            '保存订单超时'
+        );
+        
+        if (insertError) throw insertError;
+        
+        showToast('✅ 订单提交成功！');
+        
+        // 清空表单
+        document.getElementById('phoneInput').value = '';
+        document.getElementById('couponSelect').value = '0';
+        document.getElementById('previewImg').classList.remove('show');
+        document.getElementById('uploadText').textContent = '点击上传付款截图';
+        uploadedFile = null;
+        
+    } catch(e) {
+        console.error('提交订单失败：', e);
+        showToast('❌ 提交失败：' + e.message);
+    }
+}
 
-document.getElementById('phoneInput').addEventListener('input', function(e) { this.value = this.value.replace(/\D/g, ''); });
+function base64ToFile(dataUrl) {
+    const arr = dataUrl.split(',');
+    const mime = arr[0].match(/:(.*?);/)[1];
+    const bstr = atob(arr[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+    while(n--) {
+        u8arr[n] = bstr.charCodeAt(n);
+    }
+    return new Blob([u8arr], { type: mime });
+}
+
+// ============ 初始化 ============
+document.addEventListener('DOMContentLoaded', function() {
+    updateRechargeOptions();
+    calculateAmount();
+    loadSettings();
+    
+    // 支付方式切换
+    document.querySelectorAll('.pay-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.pay-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            selectedPayMethod = this.dataset.method;
+        });
+    });
+});
