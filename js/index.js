@@ -149,14 +149,14 @@ document.getElementById('rechargeSelect')?.addEventListener('change', calculateA
 document.getElementById('couponSelect')?.addEventListener('change', calculateAmount);
 
 // ============ 手机号 & 优惠券验证 ============
-document.getElementById('phoneInput')?.addEventListener('input', function() {
+document.getElementById('phoneInput')?.addEventListener('blur', function() {
     const phone = this.value.trim();
     if (phone && !validatePhone(phone)) {
-        showToast('❌ 手机号格式错误');
-        this.setCustomValidity('invalid');
-    } else {
-        this.setCustomValidity('');
+        showToast('❌ 手机号格式错误，请输入11位手机号');
     }
+});
+document.getElementById('phoneInput')?.addEventListener('input', function() {
+    this.setCustomValidity('');
 });
 
 // ============ 上传截图 ============
