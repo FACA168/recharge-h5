@@ -104,13 +104,29 @@ body {
     flex: 1;            /* ★ 撑满内容区，登录框垂直居中 */
     padding: 24px;
 }
+
+/* ★ 登录页背景图 */
+#loginPage.active {
+    background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)),
+                url('images/login-bg.jpg') center/cover no-repeat;
+    position: relative;
+}
+
 .login-logo { font-size: 46px; margin-bottom: 10px; }
-.login-title { font-size: 20px; font-weight: 700; color: #1e293b; margin-bottom: 20px; }
+.login-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 20px;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
 .login-card {
     width: 100%;
-    background: #fff; border-radius: 16px;
+    background: rgba(255,255,255,0.95);
+    border-radius: 16px;
     padding: 22px 18px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+    backdrop-filter: blur(10px);
 }
         .login-input {
             width: 100%; padding: 14px 16px;
