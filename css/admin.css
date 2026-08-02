@@ -3,7 +3,10 @@
 /* ========== 全局重置 ========== */
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
-html, body { height: 100%; }
+html, body { 
+    height: 100%; 
+    width: 100%;
+}
 
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
@@ -15,9 +18,10 @@ body {
     height: 100vh;   /* 兜底 */
     height: 100dvh; /* 移动端动态视口高度，避免地址栏伸缩导致跳动 */
     overflow: hidden;
+    width: 100%;
 }
 
-        /* ========== 顶部导航 ========== */
+/* ========== 顶部导航 ========== */
 .header {
     display: flex;
     align-items: center;
@@ -103,13 +107,16 @@ body {
     align-items: center; justify-content: center;
     flex: 1;            /* ★ 撑满内容区，登录框垂直居中 */
     padding: 24px;
+    width: 100%;
+    min-height: 0;
 }
 
-/* ★ 登录页背景图 */
+/* ★ 登录页背景图 - 自动适应屏幕 */
 #loginPage.active {
     background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)),
                 url('images/login-bg.jpg') center/cover no-repeat;
     position: relative;
+    min-height: 100%;
 }
 
 .login-logo { font-size: 46px; margin-bottom: 10px; }
@@ -119,9 +126,11 @@ body {
     color: #fff;
     margin-bottom: 20px;
     text-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    text-align: center;
 }
 .login-card {
     width: 100%;
+    max-width: 360px;
     background: rgba(255,255,255,0.95);
     border-radius: 16px;
     padding: 22px 18px;
@@ -132,6 +141,7 @@ body {
             width: 100%; padding: 14px 16px;
             border: 1.5px solid #e2e8f0; border-radius: 10px;
             font-size: 15px; outline: none; margin-bottom: 14px;
+            min-height: 44px; /* 触摸友好 */
         }
         .login-input:focus { border-color: #F59E0B; box-shadow: 0 0 0 3px rgba(245,158,11,0.12); }
         .login-btn {
@@ -140,6 +150,7 @@ body {
             border: none; border-radius: 10px; color: #fff;
             font-size: 16px; font-weight: 600; cursor: pointer;
             letter-spacing: 2px; transition: all 0.25s ease;
+            min-height: 48px; /* 触摸友好 */
         }
         .login-btn:active { transform: scale(0.98); }
         .login-error { color: #ef4444; font-size: 13px; text-align: center; margin-top: 12px; display: none; }
@@ -149,10 +160,13 @@ body {
     background: #fff; border-radius: 14px;
     padding: 14px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);
     margin-bottom: 10px;
+    width: 100%;
 }
 .card-header {
     display: flex; align-items: center; justify-content: space-between;
     margin-bottom: 14px;
+    flex-wrap: wrap;
+    gap: 8px;
 }
 .card-title { font-size: 16px; font-weight: 700; color: #1e293b; }
         .card-badge {
@@ -166,12 +180,14 @@ body {
     flex: 1; padding: 10px 13px;
     border: 1.5px solid #e2e8f0; border-radius: 10px;
     font-size: 14px; outline: none;
+    min-height: 40px;
 }
         .search-input:focus { border-color: #F59E0B; }
         .search-btn {
             padding: 11px 18px; background: #F5A623; border: none;
             border-radius: 10px; color: #fff; font-size: 14px;
             cursor: pointer; white-space: nowrap;
+            min-height: 40px;
         }
         .search-btn:active { transform: scale(0.97); }
 
@@ -186,6 +202,8 @@ body {
 .order-top {
     display: flex; justify-content: space-between;
     align-items: center; margin-bottom: 8px;
+    flex-wrap: wrap;
+    gap: 4px;
 }
         .order-id {
             font-family: 'Courier New', monospace; font-size: 12px;
@@ -201,6 +219,8 @@ body {
 .order-info-row {
     display: flex; justify-content: space-between;
     font-size: 13px; padding: 3px 0; color: #475569;
+    flex-wrap: wrap;
+    gap: 4px;
 }
         .order-info-label { color: #94a3b8; }
         .order-info-value { font-weight: 600; }
@@ -226,14 +246,17 @@ body {
         .detail-row {
             display: flex; justify-content: space-between;
             padding: 10px 0; border-bottom: 1px solid #f1f5f9; font-size: 14px;
+            flex-wrap: wrap;
+            gap: 8px;
         }
         .detail-label { color: #64748b; }
         .detail-value { font-weight: 600; text-align: right; max-width: 60%; word-break: break-all; }
-        .detail-screenshot { width: 100%; border-radius: 10px; margin-top: 10px; border: 1px solid #e2e8f0; }
+        .detail-screenshot { width: 100%; border-radius: 10px; margin-top: 10px; border: 1px solid #e2e8f0; max-height: 300px; object-fit: contain; }
         .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
         .action-btn {
             flex: 1; padding: 13px; border: none; border-radius: 10px;
             font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.2s ease;
+            min-height: 44px;
         }
         .action-btn:active { transform: scale(0.97); }
         .btn-approve { background: #22c55e; color: #fff; }
@@ -245,11 +268,13 @@ body {
         .setting-label {
             font-size: 14px; font-weight: 600; color: #334155;
             margin-bottom: 8px; display: flex; align-items: center; gap: 6px;
+            flex-wrap: wrap;
         }
         .setting-input {
             width: 100%; padding: 12px 14px;
             border: 1.5px solid #e2e8f0; border-radius: 10px;
             font-size: 14px; outline: none; transition: all 0.25s ease;
+            min-height: 44px;
         }
         .setting-input:focus { border-color: #F59E0B; box-shadow: 0 0 0 3px rgba(245,158,11,0.12); }
         .setting-textarea {
@@ -260,25 +285,25 @@ body {
         }
         .setting-textarea:focus { border-color: #F59E0B; box-shadow: 0 0 0 3px rgba(245,158,11,0.12); }
         .qr-upload-area {
-            position: relative; overflow: hidden;  /* ★ 作为覆盖层定位容器 */
+            position: relative; overflow: hidden;
             border: 2px dashed #cbd5e1; border-radius: 12px;
             padding: 20px; text-align: center; cursor: pointer;
             transition: all 0.25s ease; background: #fafbfc; margin-bottom: 8px;
+            width: 100%;
         }
-        /* ★ 覆盖式上传：真实 input 物理覆盖整个区域，微信/受限浏览器也能直接触发选择框
-              （不再用 display:none + JS .click()，后者在微信内置浏览器会被拦截） */
         .qr-input-overlay {
             position: absolute; inset: 0; width: 100%; height: 100%;
             opacity: 0; cursor: pointer; z-index: 1; font-size: 0;
         }
         .qr-upload-area:hover { border-color: #F59E0B; }
-        .qr-preview-img { max-width: 160px; max-height: 160px; border-radius: 8px; margin-top: 8px; display: none; }
+        .qr-preview-img { max-width: 100%; max-height: 200px; border-radius: 8px; margin-top: 8px; display: none; }
         .qr-preview-img.show { display: inline-block; }
         .save-btn {
             width: 100%; padding: 14px; margin-top: 8px;
             background: linear-gradient(135deg, #F5A623 0%, #D48806 100%);
             border: none; border-radius: 12px; color: #fff;
             font-size: 16px; font-weight: 600; cursor: pointer; letter-spacing: 2px;
+            min-height: 48px;
         }
         .save-btn:active { transform: scale(0.98); }
 
@@ -290,6 +315,8 @@ body {
             padding: 14px 26px; border-radius: 10px; font-size: 14px;
             z-index: 999; opacity: 0; visibility: hidden;
             transition: all 0.3s ease; backdrop-filter: blur(4px);
+            max-width: 90%;
+            word-break: break-word;
         }
         .toast.show { opacity: 1; visibility: visible; transform: translate(-50%,-50%) scale(1); }
 
@@ -301,3 +328,56 @@ body {
 }
 .stat-num { font-size: 22px; font-weight: 800; color: #1e293b; }
 .stat-label { font-size: 11px; color: #64748b; margin-top: 4px; }
+
+/* ========== 响应式优化 ========== */
+@media (max-width: 375px) {
+    .header { padding: 10px 12px; }
+    .header-title { font-size: 16px; }
+    .header-btn { padding: 6px 12px; font-size: 12px; }
+    .top-tab-bar { padding: 0 8px; }
+    .top-tab-item { padding: 12px 6px 10px; }
+    .top-tab-icon { font-size: 18px; }
+    .top-tab-name { font-size: 11px; }
+    .main { padding: 8px; }
+    .card { padding: 12px; }
+    .card-title { font-size: 15px; }
+    .search-box { gap: 6px; }
+    .search-input { padding: 8px 10px; font-size: 13px; }
+    .search-btn { padding: 9px 14px; font-size: 13px; }
+    .order-item { padding: 10px; }
+    .order-id { font-size: 11px; }
+    .order-info-row { font-size: 12px; }
+    .setting-group { margin-bottom: 12px; }
+    .setting-label { font-size: 13px; }
+    .setting-input, .setting-textarea { padding: 10px 12px; font-size: 13px; }
+    .save-btn { padding: 12px; font-size: 15px; }
+    .stat-card { padding: 10px 6px; }
+    .stat-num { font-size: 20px; }
+    .stat-label { font-size: 10px; }
+}
+
+@media (min-width: 768px) {
+    .main { padding: 20px; }
+    .card { padding: 20px; }
+    .card-title { font-size: 18px; }
+    .search-input { padding: 12px 16px; font-size: 15px; }
+    .search-btn { padding: 13px 20px; font-size: 15px; }
+    .order-item { padding: 16px; }
+    .order-id { font-size: 13px; }
+    .order-info-row { font-size: 14px; }
+    .setting-label { font-size: 15px; }
+    .setting-input, .setting-textarea { padding: 14px 16px; font-size: 15px; }
+    .save-btn { padding: 16px; font-size: 17px; }
+    .stat-card { padding: 16px 12px; }
+    .stat-num { font-size: 26px; }
+    .stat-label { font-size: 12px; }
+}
+
+/* 横屏优化 */
+@media (orientation: landscape) {
+    body { height: 100dvh; }
+    .main { padding: 8px; }
+    .login-card { padding: 18px 16px; }
+    .login-input { padding: 12px 14px; }
+    .login-btn { padding: 12px; }
+}
