@@ -63,9 +63,9 @@ function showToast(msg) {
 }
 
 // ============================================================
-//  登录（前端模拟，账号密码存浏览器 localStorage）
+//  登录（使用 Supabase 账号密码认证）
 // ============================================================
-function doLogin() {
+async function doLogin() {
     const user = document.getElementById('loginUser').value.trim();
     const pass = document.getElementById('loginPass').value.trim();
     const errEl = document.getElementById('loginError');
@@ -76,18 +76,27 @@ function doLogin() {
         return;
     }
 
-    let adminInfo = JSON.parse(localStorage.getItem('admin_info') || '{}');
-    const savedUser = adminInfo.username || 'admin';
-    const savedPass = adminInfo.password || 'admin123';
-
-    if (user === savedUser && pass === savedPass) {
-        errEl.style.display = 'none';
-        localStorage.setItem('admin_logged_in', '1'); // 记住登录态，刷新不再退出登录
+    errEl.style.display = 'none';
+    showToast('正在登录...');
+    
+    try {
+        // 使用 Supabase Auth 登录
+        const { data, error } = await sbClient.auth.signInWithPassword({
+            email: user + '@admin.local',  // 将账号转为邮箱格式
+            password: pass
+        });
+        
+        if (error) throw error;
+        
+        // 登录成功
+        localStorage.setItem('admin_logged_in', '1');
+        localStorage.setItem('admin_user', user);
         enterDashboard();
         showToast('✅ 登录成功！');
-    } else {
+    } catch(e) {
         errEl.textContent = '❌ 账号或密码错误！';
         errEl.style.display = 'block';
+        console.error('登录失败：', e);
     }
 }
 
@@ -106,8 +115,10 @@ function enterDashboard() {
 // ============================================================
 //  退出登录
 // ============================================================
-function logout() {
-    localStorage.removeItem('admin_logged_in'); // 清除登录态
+async function logout() {
+    await sbClient.auth.signOut();
+    localStorage.removeItem('admin_logged_in');
+    localStorage.removeItem('admin_user');
     document.getElementById('dashboardArea').style.display = 'none';
     document.getElementById('adminHeader').style.display = 'none';
     document.getElementById('tabBar').style.display = 'none';
@@ -562,9 +573,9 @@ async function saveSettings() {
 }
 
 // ============================================================
-//  修改管理员密码（前端模拟）
+//  修改管理员密码（使用 Supabase Auth）
 // ============================================================
-function changePassword() {
+async function changePassword() {
     const oldPass = document.getElementById('oldPass').value;
     const newPass = document.getElementById('newPass').value;
     const confirmPass = document.getElementById('confirmPass').value;
@@ -573,30 +584,40 @@ function changePassword() {
         showToast('⚠️ 请填写完整所有密码字段');
         return;
     }
-    let adminInfo = JSON.parse(localStorage.getItem('admin_info') || '{}');
-    const currentSavedPass = adminInfo.password || 'admin123';
-    if (oldPass !== currentSavedPass) { showToast('❌ 当前密码不正确'); return; }
     if (newPass.length < 6) { showToast('⚠️ 新密码至少6位'); return; }
     if (newPass !== confirmPass) { showToast('❌ 两次输入的新密码不一致'); return; }
 
-    adminInfo.password = newPass;
-    if (!adminInfo.username) adminInfo.username = 'admin';
-    localStorage.setItem('admin_info', JSON.stringify(adminInfo));
-
-    document.getElementById('oldPass').value = '';
-    document.getElementById('newPass').value = '';
-    document.getElementById('confirmPass').value = '';
-    showToast('✅ 密码修改成功！');
+    try {
+        const { error } = await sbClient.auth.updateUser({ password: newPass });
+        if (error) throw error;
+        
+        showToast('✅ 密码修改成功！');
+        document.getElementById('oldPass').value = '';
+        document.getElementById('newPass').value = '';
+        document.getElementById('confirmPass').value = '';
+    } catch(e) {
+        showToast('❌ 修改失败：' + e.message);
+    }
 }
 
 // ============================================================
 //  回车键快捷操作
 // ============================================================
 document.addEventListener('DOMContentLoaded', function() {
-    // 刷新后自动恢复登录态（前端模拟登录，localStorage 标记存在即视为已登录）
-    if (localStorage.getItem('admin_logged_in') === '1') {
-        enterDashboard();
-    }
+    // 刷新后自动恢复登录态（检查 Supabase Auth 会话）
+    sbClient.auth.onAuthStateChange((event, session) => {
+        if (session) {
+            enterDashboard();
+        } else {
+            // 未登录，显示登录页
+            document.getElementById('loginPage').classList.add('active');
+            document.getElementById('adminHeader').style.display = 'none';
+            document.getElementById('dashboardArea').style.display = 'none';
+            document.getElementById('tabBar').style.display = 'none';
+        }
+    });
+    
+    // 回车键快捷操作
     const si = document.getElementById('searchInput');
     if (si) si.addEventListener('keydown', e => { if (e.key==='Enter') searchOrders(); });
     const lp = document.getElementById('loginPass');
