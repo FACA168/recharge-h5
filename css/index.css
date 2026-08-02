@@ -229,5 +229,119 @@ body {
     background: #5B9BD5; color: #fff; padding: 13px 26px; border-radius: 10px;
     font-size: 14px; z-index: 999; opacity: 0; visibility: hidden;
     transition: all 0.25s ease;
+    max-width: 90%;
+    word-break: break-word;
 }
 .toast.show { opacity: 1; visibility: visible; transform: translate(-50%,-50%) scale(1); }
+
+/* ========== 响应式优化 ========== */
+@media (max-width: 375px) {
+    .header { padding: 12px 14px; }
+    .header-icon { width: 30px; height: 30px; font-size: 15px; }
+    .header-title { font-size: 17px; }
+    .home-btn { padding: 6px 12px; font-size: 12px; }
+    .main { padding: 12px; padding-bottom: 70px; }
+    .banner { padding: 20px 14px; margin-bottom: 12px; }
+    .banner-text { font-size: 15px; }
+    .banner-sub { font-size: 12px; }
+    .banner-desc { font-size: 11px; }
+    .notice-bar { padding: 11px 14px; margin-bottom: 14px; }
+    .notice-title { font-size: 12px; }
+    .notice-text { font-size: 12px; }
+    .card { padding: 16px 14px; margin-bottom: 12px; }
+    .card-title { font-size: 15px; }
+    .input-group { margin-bottom: 12px; }
+    .input-label { font-size: 12px; }
+    .form-input { padding: 11px 13px; font-size: 14px; }
+    .btn-primary, .btn-secondary { padding: 12px 16px; font-size: 14px; }
+    .amount-grid { gap: 8px; margin-bottom: 10px; }
+    .amount-item { padding: 10px 3px; }
+    .amount-value { font-size: 15px; }
+    .order-summary { padding: 10px 12px; margin-bottom: 12px; font-size: 12px; }
+    .summary-row { padding: 4px 0; }
+    .pay-methods { gap: 10px; margin-bottom: 14px; }
+    .pay-method { padding: 11px; }
+    .pay-method-name { font-size: 12px; }
+    .qrcode-container { padding: 14px; margin-bottom: 12px; }
+    .qrcode-img, .qrcode-placeholder { width: 180px; height: 180px; }
+    .qrcode-tip { font-size: 12px; }
+    .upload-area { padding: 18px; margin-bottom: 12px; }
+    .upload-icon { font-size: 30px; }
+    .upload-text { font-size: 13px; }
+    .upload-preview { height: 140px; }
+    .result-step.active { min-height: calc(100vh - 100px); }
+    .result-card { padding: 24px 16px; }
+    .result-icon { font-size: 44px; }
+    .result-title { font-size: 17px; }
+    .result-desc { font-size: 13px; }
+    .result-order-id { font-size: 11px; padding: 6px 12px; }
+    .dot-loader { gap: 8px; margin: 22px 0 12px; }
+    .dot-loader .dot { width: 10px; height: 10px; }
+    .progress-text { font-size: 13px; }
+    .toast { padding: 12px 22px; font-size: 13px; }
+}
+
+@media (min-width: 768px) {
+    .header { padding: 18px 24px; }
+    .header-icon { width: 38px; height: 38px; font-size: 18px; }
+    .header-title { font-size: 21px; }
+    .home-btn { padding: 8px 18px; font-size: 14px; }
+    .main { padding: 24px; padding-bottom: 100px; max-width: 600px; }
+    .banner { padding: 32px 24px; margin-bottom: 18px; }
+    .banner-text { font-size: 20px; }
+    .banner-sub { font-size: 15px; }
+    .banner-desc { font-size: 13px; }
+    .notice-bar { padding: 16px 20px; margin-bottom: 20px; }
+    .notice-title { font-size: 14px; }
+    .notice-text { font-size: 14px; }
+    .card { padding: 24px 20px; margin-bottom: 18px; }
+    .card-title { font-size: 18px; }
+    .input-group { margin-bottom: 18px; }
+    .input-label { font-size: 14px; }
+    .form-input { padding: 14px 16px; font-size: 16px; }
+    .btn-primary, .btn-secondary { padding: 16px 24px; font-size: 16px; }
+    .amount-grid { gap: 12px; margin-bottom: 16px; }
+    .amount-item { padding: 14px 5px; }
+    .amount-value { font-size: 19px; }
+    .order-summary { padding: 14px 18px; margin-bottom: 18px; font-size: 14px; }
+    .summary-row { padding: 6px 0; }
+    .pay-methods { gap: 16px; margin-bottom: 20px; }
+    .pay-method { padding: 16px; }
+    .pay-method-name { font-size: 14px; }
+    .qrcode-container { padding: 24px; margin-bottom: 18px; }
+    .qrcode-img, .qrcode-placeholder { width: 240px; height: 240px; }
+    .qrcode-tip { font-size: 14px; }
+    .upload-area { padding: 28px; margin-bottom: 18px; }
+    .upload-icon { font-size: 42px; }
+    .upload-text { font-size: 15px; }
+    .upload-preview { height: 200px; }
+    .result-step.active { min-height: calc(100vh - 140px); }
+    .result-card { padding: 40px 24px; }
+    .result-icon { font-size: 60px; }
+    .result-title { font-size: 22px; }
+    .result-desc { font-size: 15px; }
+    .result-order-id { font-size: 13px; padding: 10px 16px; }
+    .dot-loader { gap: 12px; margin: 32px 0 18px; }
+    .dot-loader .dot { width: 14px; height: 14px; }
+    .progress-text { font-size: 15px; }
+    .toast { padding: 16px 30px; font-size: 15px; }
+}
+
+/* 横屏优化 */
+@media (orientation: landscape) {
+    body { min-height: 100dvh; }
+    .main { padding: 12px; padding-bottom: 60px; }
+    .banner { padding: 18px 14px; }
+    .card { padding: 16px; }
+    .form-input { padding: 10px 12px; }
+    .btn-primary, .btn-secondary { padding: 12px 18px; }
+    .result-step.active { min-height: calc(100dvh - 80px); }
+    .result-card { padding: 20px 16px; }
+}
+
+/* 大屏幕优化 */
+@media (min-width: 1024px) {
+    .main { max-width: 700px; }
+    .amount-grid { grid-template-columns: repeat(4, 1fr); }
+    .pay-methods { gap: 20px; }
+}
