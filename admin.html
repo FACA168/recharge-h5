@@ -17,6 +17,16 @@
     <button class="header-btn danger" onclick="logout()">退出登录</button>
 </header>
 
+<!-- ===== 顶部 Tab 导航 ===== -->
+<nav class="top-tab-bar" id="topTabBar" style="display:none;">
+    <button class="top-tab-item active" onclick="switchTab('orders')">
+        <span class="top-tab-icon">📋</span><span class="top-tab-name">订单管理</span>
+    </button>
+    <button class="top-tab-item" onclick="switchTab('settings')">
+        <span class="top-tab-icon">⚙️</span><span class="top-tab-name">系统设置</span>
+    </button>
+</nav>
+
 <!-- ===== 主内容 ===== -->
 <main class="main">
 
@@ -154,16 +164,6 @@
     </div>
 
 </main>
-
-<!-- ===== 底部导航 ===== -->
-<nav class="tab-bar" id="tabBar" style="display:none;">
-    <button class="tab-item active" onclick="switchTab('orders')">
-        <span class="tab-icon">📋</span><span class="tab-name">订单管理</span>
-    </button>
-    <button class="tab-item" onclick="switchTab('settings')">
-        <span class="tab-icon">⚙️</span><span class="tab-name">系统设置</span>
-    </button>
-</nav>
 
 <!-- ===== 订单详情弹窗 ===== -->
 <div class="modal-overlay" id="orderModal">

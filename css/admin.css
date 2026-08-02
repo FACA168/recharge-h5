@@ -46,6 +46,39 @@ body {
         .header-btn:active { transform: scale(0.96); }
         .header-btn.danger { background: rgba(239,68,68,0.6); }
 
+        /* ========== 顶部 Tab 导航 ========== */
+.top-tab-bar {
+    display: flex;
+    background: #fff;
+    border-bottom: 2px solid #e2e8f0;
+    flex-shrink: 0;
+    z-index: 90;
+    max-width: 520px;
+    width: 100%;
+    margin: 0 auto;
+}
+        .top-tab-item {
+            flex: 1;
+            padding: 14px 8px 12px;
+            text-align: center;
+            cursor: pointer;
+            border: none;
+            background: none;
+            transition: all 0.2s ease;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -2px;
+        }
+        .top-tab-item.active {
+            color: #5B9BD5;
+            border-bottom-color: #5B9BD5;
+            background: #f0f7ff;
+        }
+        .top-tab-item:not(.active) {
+            color: #94a3b8;
+        }
+        .top-tab-icon { font-size: 20px; display: block; margin-bottom: 4px; }
+        .top-tab-name { font-size: 13px; font-weight: 500; display: block; }
+
         /* ========== 主内容 ========== */
 .main {
     flex: 1 1 auto;
@@ -232,24 +265,6 @@ body {
             font-size: 16px; font-weight: 600; cursor: pointer; letter-spacing: 2px;
         }
         .save-btn:active { transform: scale(0.98); }
-
-        /* ========== 底部导航 ========== */
-.tab-bar {
-    /* ★ 改为 flex 底部固定，不再用 fixed 浮层，避免遮挡内容 */
-    flex-shrink: 0;
-    background: #fff; display: flex; border-top: 1px solid #e2e8f0;
-    z-index: 99; max-width: 520px; width: 100%; margin: 0 auto;
-    padding-bottom: env(safe-area-inset-bottom); /* iPhone 底部安全区 */
-}
-        .tab-item {
-            flex: 1; padding: 10px 4px 8px; text-align: center;
-            cursor: pointer; border: none; background: none; transition: all 0.2s ease;
-        }
-        .tab-item.active { color: #5B9BD5; }
-        .tab-item:not(.active) { color: #94a3b8; }
-        .tab-icon { font-size: 22px; display: block; }
-        .tab-name { font-size: 11px; margin-top: 2px; display: block; }
-        .has-tabbar { padding-bottom: 8px; } /* 底部栏已在 flex 流中，无需额外留白 */
 
         /* ========== Toast ========== */
         .toast {

@@ -106,8 +106,8 @@ async function doLogin() {
 function enterDashboard() {
     document.getElementById('loginPage').classList.remove('active');
     document.getElementById('adminHeader').style.display = 'flex';
+    document.getElementById('topTabBar').style.display = 'flex';
     document.getElementById('dashboardArea').style.display = 'block';
-    document.getElementById('tabBar').style.display = 'flex';
     loadSettings();
     renderOrderList();
 }
@@ -121,7 +121,7 @@ async function logout() {
     localStorage.removeItem('admin_user');
     document.getElementById('dashboardArea').style.display = 'none';
     document.getElementById('adminHeader').style.display = 'none';
-    document.getElementById('tabBar').style.display = 'none';
+    document.getElementById('topTabBar').style.display = 'none';
     document.getElementById('loginPage').classList.add('active');
     document.getElementById('loginUser').value = '';
     document.getElementById('loginPass').value = '';
@@ -129,10 +129,10 @@ async function logout() {
 }
 
 // ============================================================
-//  底部 Tab 切换
+//  顶部 Tab 切换
 // ============================================================
 function switchTab(tabName) {
-    document.querySelectorAll('.tab-item').forEach((item, idx) => {
+    document.querySelectorAll('.top-tab-item').forEach((item, idx) => {
         item.classList.toggle('active', (tabName==='orders'&&idx===0)||(tabName==='settings'&&idx===1));
     });
     document.getElementById('tabOrders').classList.toggle('active', tabName==='orders');
@@ -602,8 +602,8 @@ document.addEventListener('DOMContentLoaded', function() {
             // 未登录，显示登录页
             document.getElementById('loginPage').classList.add('active');
             document.getElementById('adminHeader').style.display = 'none';
+            document.getElementById('topTabBar').style.display = 'none';
             document.getElementById('dashboardArea').style.display = 'none';
-            document.getElementById('tabBar').style.display = 'none';
         }
     });
     
