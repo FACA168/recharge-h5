@@ -1,7 +1,7 @@
 // ============ 充值中心前台逻辑（index.js） ============
 // ============ 配置区 ============
 const SUPABASE_URL = 'https://unytaslvyaytlqdmwavm.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVuWXNsbHZ5YXl0bHFkbXdhdm0iLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc4NDk5Njg1Mn0.lU5OU0tWSzeYPiBWskH1jJ83BvgOEeCFm8DAYNLUET0';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVueXRhc2x2eWF5dGxxZG13YXZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ5OTY4NTIsImV4cCI6MjEwMDU3Mjg1Mn0.lU5OU0tWSzeYPiBWskH1jJ83BvgOEeCFm8DAYNLUET0';
 
 let sbClient = null;
 try {
