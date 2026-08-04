@@ -25,6 +25,9 @@
     /* 顶部导航 */
     .top-bar { background: #fff; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 100; }
     .top-bar-title { font-size: 18px; font-weight: 700; color: #1e293b; }
+    .top-bar-right { display: flex; gap: 10px; align-items: center; }
+    .top-bar-btn { padding: 8px 14px; background: #f1f5f9; color: #64748b; border: none; border-radius: 8px; font-size: 14px; cursor: pointer; }
+    .top-bar-btn:hover { background: #e2e8f0; }
     .top-bar-logout { padding: 8px 16px; background: #fee2e2; color: #dc2626; border: none; border-radius: 8px; font-size: 14px; cursor: pointer; }
     
     /* 功能切换 Tabs */
@@ -49,9 +52,6 @@
     .order-info { font-size: 14px; color: #334155; line-height: 1.8; }
     .order-info span { color: #64748b; }
     .order-amount { font-size: 20px; font-weight: 700; color: #e8941c; margin: 8px 0; }
-    .order-actions { display: flex; gap: 10px; margin-top: 12px; }
-    .btn-approve { flex: 1; padding: 10px; background: #dcfce7; color: #16a34a; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; }
-    .btn-reject { flex: 1; padding: 10px; background: #fee2e2; color: #dc2626; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; }
     
     /* 客服列表 */
     .conv-list { background: #fff; border-radius: 12px; overflow: hidden; }
@@ -84,14 +84,31 @@
     .chat-input:focus { outline: none; border-color: #6366f1; }
     .chat-send { padding: 12px 20px; background: #6366f1; color: #fff; border: none; border-radius: 24px; font-weight: 600; cursor: pointer; }
     
-    /* 空态 */
-    .empty-state { text-align: center; padding: 40px 20px; color: #94a3b8; }
-    .empty-icon { font-size: 48px; margin-bottom: 12px; }
-    
     /* 搜索栏 */
     .search-bar { margin: 16px 0; }
     .search-input { width: 100%; padding: 12px 16px; border: 1.5px solid #e2e8f0; border-radius: 10px; font-size: 14px; }
     .search-input:focus { outline: none; border-color: #6366f1; }
+    
+    /* 空态 */
+    .empty-state { text-align: center; padding: 40px 20px; color: #94a3b8; }
+    .empty-icon { font-size: 48px; margin-bottom: 12px; }
+    
+    /* 设置弹窗 */
+    .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; padding: 20px; }
+    .modal.active { display: flex; }
+    .modal-content { background: #fff; border-radius: 16px; padding: 24px; width: 100%; max-width: 400px; max-height: 85vh; overflow-y: auto; }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .modal-title { font-size: 18px; font-weight: 700; color: #1e293b; }
+    .modal-close { width: 32px; height: 32px; border-radius: 8px; background: #f1f5f9; border: none; cursor: pointer; font-size: 18px; color: #64748b; }
+    .form-group { margin-bottom: 16px; }
+    .form-label { display: block; font-size: 14px; color: #64748b; margin-bottom: 6px; }
+    .form-input { width: 100%; padding: 12px 14px; border: 1.5px solid #e2e8f0; border-radius: 8px; font-size: 14px; }
+    .form-input:focus { outline: none; border-color: #6366f1; }
+    .form-textarea { width: 100%; padding: 12px 14px; border: 1.5px solid #e2e8f0; border-radius: 8px; font-size: 14px; min-height: 80px; resize: vertical; }
+    .form-textarea:focus { outline: none; border-color: #6366f1; }
+    .modal-footer { display: flex; gap: 10px; margin-top: 20px; }
+    .btn-save { flex: 1; padding: 12px; background: #6366f1; color: #fff; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; }
+    .btn-cancel { flex: 1; padding: 12px; background: #f1f5f9; color: #64748b; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; }
   </style>
 </head>
 <body>
@@ -113,7 +130,11 @@
   <!-- 顶部导航 -->
   <div class="top-bar">
     <div class="top-bar-title">🛡️ 管理后台</div>
-    <button class="top-bar-logout" onclick="doLogout()">退出登录</button>
+    <div class="top-bar-right">
+      <button class="top-bar-btn" onclick="openSettings('recharge')">⚙️ 充值设置</button>
+      <button class="top-bar-btn" onclick="openSettings('chat')">💬 聊天设置</button>
+      <button class="top-bar-logout" onclick="doLogout()">退出</button>
+    </div>
   </div>
   
   <!-- 功能切换 -->
@@ -155,6 +176,21 @@
   </div>
 </div>
 
+<!-- 设置弹窗 -->
+<div class="modal" id="settingsModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3 class="modal-title" id="settingsTitle">设置</h3>
+      <button class="modal-close" onclick="closeSettings()">×</button>
+    </div>
+    <div id="settingsBody"></div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeSettings()">取消</button>
+      <button class="btn-save" onclick="saveSettings()">保存</button>
+    </div>
+  </div>
+</div>
+
 <script>
 // 配置
 const RECHARGE_URL = 'https://unytaslvyaytlqdmwavm.supabase.co';
@@ -171,13 +207,21 @@ let isLoggedIn = false;
 let allOrders = [];
 let allConversations = [];
 let currentChatId = null;
-let currentTab = 'open';
+let currentSettingsType = null;
+let currentSettingsData = {};
 
 // 初始化
 function init() {
   try {
     rechargeClient = supabase.createClient(RECHARGE_URL, RECHARGE_KEY);
     chatClient = supabase.createClient(CHAT_URL, CHAT_KEY);
+    
+    // 检查登录状态
+    const savedLogin = localStorage.getItem('admin_logged_in');
+    if (savedLogin === '1') {
+      isLoggedIn = true;
+      showMainPage();
+    }
   } catch(e) {
     console.error('Supabase初始化失败:', e);
   }
@@ -201,16 +245,23 @@ function doLogin() {
     return;
   }
   
+  // 保存登录状态
+  localStorage.setItem('admin_logged_in', '1');
   isLoggedIn = true;
+  showMainPage();
+}
+
+// 显示主页面
+function showMainPage() {
   document.getElementById('loginPage').style.display = 'none';
   document.getElementById('mainPage').style.display = 'block';
-  
   loadOrders();
   loadConversations();
 }
 
 // 退出
 function doLogout() {
+  localStorage.removeItem('admin_logged_in');
   isLoggedIn = false;
   document.getElementById('loginPage').style.display = 'flex';
   document.getElementById('mainPage').style.display = 'none';
@@ -226,8 +277,6 @@ function switchMode(mode) {
   if (mode === 'orders') {
     document.querySelector('.mode-tab:nth-child(1)').classList.add('active');
     document.getElementById('ordersPanel').classList.add('active');
-    document.getElementById('chatArea').classList.remove('active');
-    document.getElementById('convList').style.display = 'block';
   } else {
     document.querySelector('.mode-tab:nth-child(2)').classList.add('active');
     document.getElementById('chatPanel').classList.add('active');
@@ -304,25 +353,6 @@ function searchOrders() {
     (o.order_id && o.order_id.toLowerCase().includes(kw))
   );
   renderOrders(filtered);
-}
-
-async function updateOrderStatus(orderId, newStatus) {
-  if (!rechargeClient) return;
-  
-  try {
-    const { error } = await rechargeClient
-      .from('orders')
-      .update({ status: newStatus })
-      .eq('order_id', orderId);
-    
-    if (error) throw error;
-    
-    const msg = newStatus === 'approved' ? '✅ 已标记为通过' : '❌ 已标记为拒绝';
-    alert(msg);
-    loadOrders();
-  } catch(e) {
-    alert('操作失败: ' + e.message);
-  }
 }
 
 // ============ 在线客服 ============
@@ -408,7 +438,6 @@ async function loadMessages(convId) {
     
     msgEl.innerHTML = data.map(m => {
       const time = new Date(m.created_at).toLocaleTimeString('zh-CN', {hour: '2-digit', minute:'2-digit'});
-      const isAgent = m.sender === 'agent';
       return `
         <div class="msg ${m.sender}">
           <div class="msg-bubble">${escapeHtml(m.content)}</div>
@@ -457,6 +486,183 @@ async function sendReply() {
     loadMessages(currentChatId);
   } catch(e) {
     alert('发送失败: ' + e.message);
+  }
+}
+
+// ============ 设置管理 ============
+function openSettings(type) {
+  currentSettingsType = type;
+  const modal = document.getElementById('settingsModal');
+  const title = document.getElementById('settingsTitle');
+  const body = document.getElementById('settingsBody');
+  
+  modal.classList.add('active');
+  
+  if (type === 'recharge') {
+    title.textContent = '油卡充值设置';
+    loadRechargeSettings();
+  } else {
+    title.textContent = '在线客服设置';
+    loadChatSettings();
+  }
+}
+
+function closeSettings() {
+  document.getElementById('settingsModal').classList.remove('active');
+  currentSettingsType = null;
+}
+
+async function loadRechargeSettings() {
+  if (!rechargeClient) return;
+  
+  try {
+    const { data, error } = await rechargeClient
+      .from('settings')
+      .select('*');
+    
+    if (error) throw error;
+    
+    currentSettingsData = {};
+    (data || []).forEach(s => {
+      currentSettingsData[s.key] = s.value;
+    });
+    
+    renderRechargeSettingsForm();
+  } catch(e) {
+    alert('加载设置失败: ' + e.message);
+  }
+}
+
+function renderRechargeSettingsForm() {
+  const body = document.getElementById('settingsBody');
+  const data = currentSettingsData;
+  
+  body.innerHTML = `
+    <div class="form-group">
+      <label class="form-label">网站名称</label>
+      <input class="form-input" id="setting_site_name" value="${data.site_name || ''}" placeholder="油卡充值平台">
+    </div>
+    <div class="form-group">
+      <label class="form-label">首页公告</label>
+      <textarea class="form-textarea" id="setting_notice" placeholder="平台公告内容...">${data.notice || ''}</textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">客服名称</label>
+      <input class="form-input" id="setting_kefu_name" value="${data.kefu_name || ''}" placeholder="在线客服">
+    </div>
+    <div class="form-group">
+      <label class="form-label">客服转跳链接</label>
+      <input class="form-input" id="setting_kefu_link" value="${data.kefu_link || ''}" placeholder="https://">
+    </div>
+    <div class="form-group">
+      <label class="form-label">微信收款码URL</label>
+      <input class="form-input" id="setting_wechat_qr" value="${data.wechat_qr || ''}" placeholder="https://">
+    </div>
+    <div class="form-group">
+      <label class="form-label">支付宝收款码URL</label>
+      <input class="form-input" id="setting_alipay_qr" value="${data.alipay_qr || ''}" placeholder="https://">
+    </div>
+  `;
+}
+
+async function saveRechargeSettings() {
+  if (!rechargeClient) return;
+  
+  const settings = [
+    { key: 'site_name', value: document.getElementById('setting_site_name').value },
+    { key: 'notice', value: document.getElementById('setting_notice').value },
+    { key: 'kefu_name', value: document.getElementById('setting_kefu_name').value },
+    { key: 'kefu_link', value: document.getElementById('setting_kefu_link').value },
+    { key: 'wechat_qr', value: document.getElementById('setting_wechat_qr').value },
+    { key: 'alipay_qr', value: document.getElementById('setting_alipay_qr').value },
+  ];
+  
+  try {
+    for (const s of settings) {
+      await rechargeClient
+        .from('settings')
+        .upsert({ key: s.key, value: s.value }, { onConflict: 'key' });
+    }
+    alert('✅ 保存成功！');
+    closeSettings();
+  } catch(e) {
+    alert('保存失败: ' + e.message);
+  }
+}
+
+async function loadChatSettings() {
+  if (!chatClient) return;
+  
+  try {
+    const { data, error } = await chatClient
+      .from('settings')
+      .select('*')
+      .eq('id', 'default')
+      .maybeSingle();
+    
+    if (error) throw error;
+    
+    currentSettingsData = data || {};
+    renderChatSettingsForm();
+  } catch(e) {
+    alert('加载设置失败: ' + e.message);
+  }
+}
+
+function renderChatSettingsForm() {
+  const body = document.getElementById('settingsBody');
+  const data = currentSettingsData;
+  
+  body.innerHTML = `
+    <div class="form-group">
+      <label class="form-label">Logo（emoji或图片URL）</label>
+      <input class="form-input" id="setting_logo" value="${data.logo || '💬'}" placeholder="💬 或 https://">
+    </div>
+    <div class="form-group">
+      <label class="form-label">应用名称</label>
+      <input class="form-input" id="setting_app_name" value="${data.app_name || ''}" placeholder="在线客服">
+    </div>
+    <div class="form-group">
+      <label class="form-label">状态栏副标题</label>
+      <input class="form-input" id="setting_subtitle" value="${data.subtitle || ''}" placeholder="在线">
+    </div>
+    <div class="form-group">
+      <label class="form-label">欢迎语</label>
+      <textarea class="form-textarea" id="setting_welcome_text" placeholder="您好，请描述您的问题...">${data.welcome_text || ''}</textarea>
+    </div>
+  `;
+}
+
+async function saveChatSettings() {
+  if (!chatClient) return;
+  
+  const settings = {
+    id: 'default',
+    logo: document.getElementById('setting_logo').value,
+    app_name: document.getElementById('setting_app_name').value,
+    subtitle: document.getElementById('setting_subtitle').value,
+    welcome_text: document.getElementById('setting_welcome_text').value,
+    updated_at: new Date().toISOString()
+  };
+  
+  try {
+    const { error } = await chatClient
+      .from('settings')
+      .upsert(settings, { onConflict: 'id' });
+    
+    if (error) throw error;
+    alert('✅ 保存成功！');
+    closeSettings();
+  } catch(e) {
+    alert('保存失败: ' + e.message);
+  }
+}
+
+function saveSettings() {
+  if (currentSettingsType === 'recharge') {
+    saveRechargeSettings();
+  } else {
+    saveChatSettings();
   }
 }
 
