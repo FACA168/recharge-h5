@@ -133,6 +133,12 @@ function applySettings() {
 
 // ============ 选择充值金额 ============
 function selectAmount(item) {
+    // 检查是否缺货
+    if (item.classList.contains('out-of-stock')) {
+        showToast('⚠️ 该档位补货中，请选择其他金额');
+        return;
+    }
+    
     // 移除所有选中状态
     document.querySelectorAll('.amount-item').forEach(el => {
         el.classList.remove('selected');

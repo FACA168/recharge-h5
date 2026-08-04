@@ -114,13 +114,24 @@ body {
 .amount-item {
     padding: 11px 4px; text-align: center; border: 1.5px solid #D1D5DB; border-radius: 10px;
     cursor: pointer; transition: all 0.2s ease; background: #FFFFFF;
+    position: relative;
 }
 .amount-item.selected {
     border-color: #F59E0B; background: #FFFBEB;
     box-shadow: 0 0 0 2px rgba(245,158,11,0.12);
 }
 .amount-item:active { transform: scale(0.96); }
+.amount-item.out-of-stock {
+    opacity: 0.6; cursor: not-allowed; background: #F3F4F6; border-color: #D1D5DB;
+}
 .amount-value { font-size: 17px; font-weight: 800; color: #2563EB; }
+.stock-badge {
+    position: absolute; top: -8px; right: -8px;
+    background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
+    color: #fff; font-size: 11px; font-weight: 600;
+    padding: 2px 6px; border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(239,68,68,0.3);
+}
 
 /* ===== 订单摘要行 ===== */
 .order-summary {
