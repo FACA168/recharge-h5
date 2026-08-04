@@ -774,6 +774,7 @@ async function saveRechargeSettings() {
   try {
     for (const s of settings) {
       console.log('saveRechargeSettings: 保存设置', s.key, '=', s.value);
+      // 使用upsert处理插入和更新
       const { error } = await rechargeClient
         .from('settings')
         .upsert({ key: s.key, value: s.value }, { onConflict: 'key' });
