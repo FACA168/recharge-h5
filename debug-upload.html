@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>图片上传调试</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 20px; background: #f5f5f5; }
+        .container { max-width: 600px; margin: 0 auto; }
+        h1 { color: #333; margin-bottom: 20px; }
+        .card { background: #fff; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: 600; color: #555; }
+        input[type="text"], textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; }
+        .upload-area { border: 2px dashed #ccc; border-radius: 8px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.3s; }
+        .upload-area:hover { border-color: #6366f1; background: #f8f8ff; }
+        .upload-area input[type="file"] { display: none; }
+        .upload-btn { color: #6366f1; font-weight: 600; }
+        .preview { margin-top: 10px; text-align: center; }
+        .preview img { max-width: 200px; border-radius: 8px; }
+        button { background: #6366f1; color: #fff; border: none; padding: 12px 24px; border-radius: 8px; font-size: 16px; cursor: pointer; width: 100%; margin-top: 10px; }
+        button:hover { background: #4f46e5; }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+        .log { background: #1e293b; color: #e2e8f0; padding: 15px; border-radius: 8px; font-family: monospace; font-size: 12px; max-height: 300px; overflow-y: auto; white-space: pre-wrap; }
+        .log .info { color: #93c5fd; }
+        .log .success { color: #86efac; }
+        .log .error { color: #fca5a5; }
+        .status { padding: 10px; border-radius: 8px; margin-bottom: 15px; }
+        .status.success { background: #d1fae5; color: #065f46; }
+        .status.error { background: #fee2e2; color: #991b1b; }
+        .status.info { background: #dbeafe; color: #1e40af; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 图片上传调试工具</h1>
+        
+        <div class="card">
+            <h3>📋 配置信息</h3>
+            <div class="form-group">
+                <label>Supabase URL</label>
+                <input type="text" id="supabaseUrl" value="https://unytaslvyaytlqdmwavm.supabase.co" readonly>
+            </div>
+            <div class="form-group">
+                <label>Storage Bucket</label>
+                <input type="text" id="bucketName" value="screenshots" readonly>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h3>📷 上传图片</h3>
+            <div class="upload-area" onclick="document.getElementById('fileInput').click()">
+                <div class="upload-btn">📷 点击选择图片</div>
+                <div style="color: #999; font-size: 12px; margin-top: 5px;">建议尺寸: 100x100像素</div>
+                <input type="file" id="fileInput" accept="image/*">
+            </div>
+            <div class="preview" id="previewContainer" style="display:none;">
+                <img id="previewImg" src="" alt="预览">
+                <div id="previewInfo" style="font-size: 12px; color: #666; margin-top: 5px;"></div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h3>💬 客服设置</h3>
+            <div class="form-group">
+                <label>应用名称</label>
+                <input type="text" id="appName" value="在线客服">
+            </div>
+            <div class="form-group">
+                <label>状态栏副标题</label>
+                <input type="text" id="subtitle" value="在线">
+            </div>
+            <div class="form-group">
+                <label>欢迎语</label>
+                <textarea id="welcomeText" rows="3">您好，请描述您的问题，客服会尽快回复~</textarea>
+            </div>
+            <button id="saveBtn" onclick="testSave()">测试保存</button>
+        </div>
+        
+        <div class="card">
+            <h3>📊 日志</h3>
+            <div id="statusBox"></div>
+            <div class="log" id="logBox"></div>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://unytaslvyaytlqdmwavm.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVueXRhc2x2eWF5dGxxZG13YXZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ5OTY4NTIsImV4cCI6MjEwMDU3Mjg1Mn0.lU5OU0tWSzeYPiBWskH1jJ83BvgOEeCFm8DAYNLUET0';
+        const CHAT_SUPABASE_URL = 'https://afomopohtwwytfeeznur.supabase.co';
+        const CHAT_SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFmb21vcG9odHd3eXRmZWV6bnVyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ5OTY4NTIsImV4cCI6MjEwMDU3Mjg1Mn0.m8q3w2x1y8u4t5r6e7y8u4t5r6e7y8u4t5r6e7y8u4t5r6e7y8u4t5r6e7y8u4t5r6e7y8u4t5r6e7y8';
+        
+        const rechargeClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const chatClient = supabase.createClient(CHAT_SUPABASE_URL, CHAT_SUPABASE_KEY);
+        
+        let tempImageUrls = {};
+        
+        function log(msg, type = 'info') {
+            const logBox = document.getElementById('logBox');
+            const time = new Date().toLocaleTimeString();
+            const entry = document.createElement('div');
+            entry.className = type;
+            entry.textContent = `[${time}] ${msg}`;
+            logBox.appendChild(entry);
+            logBox.scrollTop = logBox.scrollHeight;
+        }
+        
+        function setStatus(msg, type) {
+            const statusBox = document.getElementById('statusBox');
+            statusBox.innerHTML = `<div class="status ${type}">${msg}</div>`;
+        }
+        
+        // 图片选择
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            log('选择文件: ' + file?.name + ', 大小: ' + file?.size + ' bytes', 'info');
+            
+            if (!file) {
+                log('❌ 没有选择文件', 'error');
+                setStatus('❌ 没有选择文件', 'error');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const base64 = event.target.result;
+                tempImageUrls['logo'] = base64;
+                log('✅ 读取成功，base64长度: ' + base64.length, 'success');
+                
+                const previewContainer = document.getElementById('previewContainer');
+                const previewImg = document.getElementById('previewImg');
+                const previewInfo = document.getElementById('previewInfo');
+                
+                previewImg.src = base64;
+                previewContainer.style.display = 'block';
+                previewInfo.textContent = file.name + ' (' + (file.size / 1024).toFixed(2) + ' KB)';
+                
+                setStatus('✅ 图片已选择，可以点击"测试保存"', 'success');
+            };
+            reader.onerror = function(e) {
+                log('❌ 读取失败: ' + e.target.error.message, 'error');
+                setStatus('❌ 读取失败: ' + e.target.error.message, 'error');
+            };
+            reader.readAsDataURL(file);
+        });
+        
+        // 测试上传
+        async function testUpload() {
+            const fileInput = document.getElementById('fileInput');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                log('❌ 请先选择图片', 'error');
+                return null;
+            }
+            
+            log('开始上传到 Supabase Storage...', 'info');
+            setStatus('⏳ 正在上传图片...', 'info');
+            
+            try {
+                const fileName = `debug-test_${Date.now()}_${file.name}`;
+                log('上传路径: screenshots/' + fileName, 'info');
+                
+                const { data, error } = await rechargeClient.storage
+                    .from('screenshots')
+                    .upload(fileName, file, { upsert: false });
+                
+                if (error) {
+                    log('❌ 上传失败: ' + error.message, 'error');
+                    setStatus('❌ 上传失败: ' + error.message, 'error');
+                    console.error('Upload error:', error);
+                    return null;
+                }
+                
+                log('✅ 上传成功!', 'success');
+                log('返回数据: ' + JSON.stringify(data), 'success');
+                
+                // 获取URL
+                const { data: urlData } = rechargeClient.storage
+                    .from('screenshots')
+                    .getPublicUrl(fileName);
+                
+                log('✅ 公开URL: ' + urlData.publicUrl, 'success');
+                
+                setStatus('✅ 图片上传成功！', 'success');
+                return urlData.publicUrl;
+                
+            } catch (e) {
+                log('❌ 上传异常: ' + e.message, 'error');
+                log('完整错误: ' + JSON.stringify(e), 'error');
+                console.error('Upload exception:', e);
+                setStatus('❌ 上传异常: ' + e.message, 'error');
+                return null;
+            }
+        }
+        
+        // 测试保存
+        async function testSave() {
+            const logoUrl = tempImageUrls['logo'] || '💬';
+            log('准备保存设置...', 'info');
+            log('Logo URL: ' + logoUrl.substring(0, 50) + '...', 'info');
+            
+            const saveBtn = document.getElementById('saveBtn');
+            saveBtn.disabled = true;
+            saveBtn.textContent = '保存中...';
+            
+            try {
+                // 先测试上传
+                const uploadedUrl = await testUpload();
+                if (!uploadedUrl) {
+                    log('❌ 图片上传失败，取消保存', 'error');
+                    return;
+                }
+                
+                const settings = {
+                    id: 'default',
+                    logo: uploadedUrl,
+                    app_name: document.getElementById('appName').value,
+                    subtitle: document.getElementById('subtitle').value,
+                    welcome_text: document.getElementById('welcomeText').value,
+                    updated_at: new Date().toISOString()
+                };
+                
+                log('准备保存到 settings 表...', 'info');
+                log('设置数据: ' + JSON.stringify(settings), 'info');
+                
+                const { data, error } = await chatClient
+                    .from('settings')
+                    .upsert(settings, { onConflict: 'id' });
+                
+                if (error) {
+                    log('❌ 保存失败: ' + error.message, 'error');
+                    log('错误详情: ' + JSON.stringify(error), 'error');
+                    setStatus('❌ 保存失败: ' + error.message, 'error');
+                    console.error('Save error:', error);
+                    return;
+                }
+                
+                log('✅ 保存成功!', 'success');
+                log('返回数据: ' + JSON.stringify(data), 'success');
+                setStatus('✅ 保存成功！', 'success');
+                
+            } catch (e) {
+                log('❌ 保存异常: ' + e.message, 'error');
+                log('完整错误: ' + JSON.stringify(e), 'error');
+                console.error('Save exception:', e);
+                setStatus('❌ 保存异常: ' + e.message, 'error');
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.textContent = '测试保存';
+            }
+        }
+        
+        // 页面加载时初始化
+        window.onload = function() {
+            log('🚀 调试工具已加载', 'success');
+            log('Supabase URL: ' + SUPABASE_URL, 'info');
+            log('聊天Supabase URL: ' + CHAT_SUPABASE_URL, 'info');
+            
+            // 测试连接
+            rechargeClient.auth.getSession().then(({ data, error }) => {
+                if (error) {
+                    log('❌ 油卡充值连接失败: ' + error.message, 'error');
+                } else {
+                    log('✅ 油卡充值连接成功', 'success');
+                }
+            });
+            
+            chatClient.auth.getSession().then(({ data, error }) => {
+                if (error) {
+                    log('❌ 客服连接失败: ' + error.message, 'error');
+                } else {
+                    log('✅ 客服连接成功', 'success');
+                }
+            });
+        };
+    </script>
+</body>
+</html>
