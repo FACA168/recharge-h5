@@ -774,7 +774,7 @@ async function saveRechargeSettings() {
   try {
     for (const s of settings) {
       console.log('saveRechargeSettings: 保存设置', s.key, '=', s.value);
-      // 使用PATCH更新现有记录（key存在）或插入新记录（key不存在）
+      // 使用PATCH更新：key存在则更新，不存在则插入
       const { error } = await rechargeClient
         .from('settings')
         .upsert({ key: s.key, value: s.value }, { onConflict: 'key' });
@@ -782,13 +782,13 @@ async function saveRechargeSettings() {
         console.error('saveRechargeSettings: 保存失败', s.key, error);
         throw error;
       }
+      console.log('saveRechargeSettings: 保存成功', s.key);
     }
-    console.log('saveRechargeSettings: 保存成功');
+    console.log('saveRechargeSettings: 全部保存成功');
     alert('✅ 保存成功！');
     closeSettings();
   } catch(e) {
     console.error('saveRechargeSettings: 保存失败', e);
-    console.error('saveRechargeSettings: 错误详情:', JSON.stringify(e, null, 2));
     alert('保存失败: ' + e.message);
   }
 }
