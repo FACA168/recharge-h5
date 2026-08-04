@@ -424,11 +424,24 @@ function showSuccess() {
 
 // ============ 联系客服 ============
 function contactKefu() {
-    const kefuLink = settingsCache['kefu_link'];
+    // 先尝试从 settingsCache 读取（云端）
+    let kefuLink = settingsCache['kefu_link'];
+    
+    // 如果云端没有，尝试从 localStorage 兜底（后台保存到本地的）
+    if (!kefuLink) {
+        try {
+            const localSettings = localStorage.getItem('admin_settings_cache');
+            if (localSettings) {
+                const map = JSON.parse(localSettings);
+                kefuLink = map['kefu_link'];
+            }
+        } catch(e) {}
+    }
+    
     if (kefuLink && kefuLink.startsWith('http')) {
         window.open(kefuLink, '_blank');
     } else {
-        showToast('请联系客服');
+        showToast('⚠️ 客服链接未配置，请联系管理员');
     }
 }
 
