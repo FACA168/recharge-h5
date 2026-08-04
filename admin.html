@@ -814,7 +814,7 @@ function renderChatSettingsForm() {
       <div class="upload-area">
         <label class="upload-btn">
           📷 选择图片
-          <input type="file" accept="image/*" style="display:none" onchange="handleChatImageUpload(this.files[0])">
+          <input type="file" accept="image/*" style="display:none" onchange="console.log('file input changed, files:', this.files.length, this.files[0]); handleChatImageUpload(this.files[0])">
         </label>
         <p class="upload-hint">建议尺寸: 100x100像素</p>
       </div>
@@ -836,8 +836,10 @@ function renderChatSettingsForm() {
 }
 
 function handleChatImageUpload(file) {
+  console.log('handleChatImageUpload called with:', file);
   if (!file) {
     console.error('handleChatImageUpload: 文件为空');
+    alert('未选择图片');
     return;
   }
   console.log('handleChatImageUpload: 开始上传文件', file.name);
