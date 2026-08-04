@@ -23,21 +23,18 @@
     .main-page { display: none; min-height: 100vh; }
     
     /* 顶部导航 */
-    .top-bar { background: #fff; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 100; }
-    .top-bar-title { font-size: 18px; font-weight: 700; color: #1e293b; }
-    .top-bar-right { display: flex; gap: 10px; align-items: center; }
-    .top-bar-btn { padding: 8px 14px; background: #f1f5f9; color: #64748b; border: none; border-radius: 8px; font-size: 14px; cursor: pointer; }
+    .top-bar { background: #fff; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 100; }
+    .top-bar-title { font-size: 17px; font-weight: 700; color: #1e293b; }
+    .top-bar-right { display: flex; gap: 8px; align-items: center; }
+    .top-bar-btn { padding: 6px 12px; background: #f1f5f9; color: #64748b; border: none; border-radius: 8px; font-size: 13px; cursor: pointer; white-space: nowrap; }
     .top-bar-btn:hover { background: #e2e8f0; }
-    .top-bar-logout { padding: 8px 16px; background: #fee2e2; color: #dc2626; border: none; border-radius: 8px; font-size: 14px; cursor: pointer; }
-    .top-bar-btn { padding: 8px 14px; background: #f1f5f9; color: #64748b; border: none; border-radius: 8px; font-size: 14px; cursor: pointer; }
-    .top-bar-btn:hover { background: #e2e8f0; }
-    .top-bar-logout { padding: 8px 16px; background: #fee2e2; color: #dc2626; border: none; border-radius: 8px; font-size: 14px; cursor: pointer; }
+    .top-bar-logout { padding: 6px 14px; background: #fee2e2; color: #dc2626; border: none; border-radius: 8px; font-size: 13px; cursor: pointer; white-space: nowrap; }
     
     /* 功能切换 Tabs */
-    .mode-tabs { display: flex; background: #fff; margin: 16px; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-    .mode-tab { flex: 1; padding: 14px; text-align: center; font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.2s; border: none; background: #fff; color: #64748b; }
+    .mode-tabs { display: flex; background: #fff; margin: 12px 16px; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+    .mode-tab { flex: 1; padding: 12px; text-align: center; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; border: none; background: #fff; color: #64748b; }
     .mode-tab.active { background: #6366f1; color: #fff; }
-    .mode-tab .tab-icon { font-size: 20px; display: block; margin-bottom: 4px; }
+    .mode-tab .tab-icon { font-size: 18px; display: block; margin-bottom: 2px; }
     
     /* 内容区域 */
     .content-area { padding: 0 16px 16px; }
@@ -45,73 +42,104 @@
     .panel.active { display: block; }
     
     /* 订单卡片 */
-    .order-card { background: #fff; border-radius: 12px; padding: 16px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-    .order-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-    .order-id { font-size: 13px; color: #64748b; }
-    .order-status { padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+    .order-card { background: #fff; border-radius: 12px; padding: 14px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+    .order-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .order-id { font-size: 12px; color: #64748b; }
+    .order-status { padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
     .status-pending { background: #fef3c7; color: #d97706; }
     .status-approved { background: #dcfce7; color: #16a34a; }
     .status-rejected { background: #fee2e2; color: #dc2626; }
-    .order-info { font-size: 14px; color: #334155; line-height: 1.8; }
+    .order-info { font-size: 13px; color: #334155; line-height: 1.7; }
     .order-info span { color: #64748b; }
-    .order-amount { font-size: 20px; font-weight: 700; color: #e8941c; margin: 8px 0; }
+    .order-amount { font-size: 18px; font-weight: 700; color: #e8941c; margin: 6px 0; }
+    .order-screenshot { margin-top: 10px; max-width: 100%; border-radius: 8px; }
     
     /* 客服列表 */
     .conv-list { background: #fff; border-radius: 12px; overflow: hidden; }
-    .conv-item { padding: 14px 16px; border-bottom: 1px solid #f1f5f9; cursor: pointer; display: flex; align-items: center; gap: 12px; }
+    .conv-item { padding: 12px 14px; border-bottom: 1px solid #f1f5f9; cursor: pointer; display: flex; align-items: center; gap: 10px; }
     .conv-item:last-child { border-bottom: none; }
     .conv-item.active { background: #eff6ff; }
-    .conv-avatar { width: 44px; height: 44px; border-radius: 50%; background: #e0e7ff; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+    .conv-avatar { width: 42px; height: 42px; border-radius: 50%; background: #e0e7ff; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
     .conv-info { flex: 1; min-width: 0; }
-    .conv-name { font-weight: 600; color: #1e293b; font-size: 15px; }
-    .conv-preview { color: #64748b; font-size: 13px; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .conv-name { font-weight: 600; color: #1e293b; font-size: 14px; }
+    .conv-preview { color: #64748b; font-size: 12px; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .conv-meta { text-align: right; flex-shrink: 0; }
-    .conv-time { font-size: 12px; color: #94a3b8; }
-    .unread-badge { background: #ef4444; color: #fff; font-size: 11px; padding: 2px 6px; border-radius: 10px; margin-top: 4px; display: inline-block; }
+    .conv-time { font-size: 11px; color: #94a3b8; }
+    .unread-badge { background: #ef4444; color: #fff; font-size: 10px; padding: 2px 5px; border-radius: 10px; margin-top: 4px; display: inline-block; }
     
     /* 聊天区 */
     .chat-area { display: none; background: #fff; border-radius: 12px; overflow: hidden; }
     .chat-area.active { display: block; }
-    .chat-header { padding: 14px 16px; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 12px; }
-    .chat-back { padding: 6px 12px; background: #f1f5f9; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; }
-    .chat-messages { padding: 16px; min-height: 300px; max-height: 50vh; overflow-y: auto; }
-    .msg { margin-bottom: 12px; display: flex; flex-direction: column; }
+    .chat-header { padding: 12px 14px; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 10px; }
+    .chat-back { padding: 6px 10px; background: #f1f5f9; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; }
+    .chat-messages { padding: 14px; min-height: 280px; max-height: 55vh; overflow-y: auto; }
+    .msg { margin-bottom: 10px; display: flex; flex-direction: column; }
     .msg.visitor { align-items: flex-start; }
     .msg.agent { align-items: flex-end; }
-    .msg-bubble { padding: 10px 14px; border-radius: 12px; max-width: 80%; font-size: 14px; line-height: 1.5; }
-    .msg.visitor .msg-bubble { background: #f1f5f9; color: #1e293b; border-radius: 12px 12px 12px 0; }
-    .msg.agent .msg-bubble { background: #6366f1; color: #fff; border-radius: 12px 12px 0 12px; }
-    .msg-time { font-size: 11px; color: #94a3b8; margin-top: 4px; }
-    .chat-input-area { padding: 12px 16px; border-top: 1px solid #f1f5f9; display: flex; gap: 10px; }
-    .chat-input { flex: 1; padding: 12px 16px; border: 1.5px solid #e2e8f0; border-radius: 24px; font-size: 14px; }
+    .msg-bubble { padding: 8px 12px; border-radius: 10px; max-width: 82%; font-size: 13px; line-height: 1.5; }
+    .msg.visitor .msg-bubble { background: #f1f5f9; color: #1e293b; border-radius: 10px 10px 10px 0; }
+    .msg.agent .msg-bubble { background: #6366f1; color: #fff; border-radius: 10px 10px 0 10px; }
+    .msg-time { font-size: 10px; color: #94a3b8; margin-top: 3px; }
+    .chat-input-area { padding: 10px 14px; border-top: 1px solid #f1f5f9; display: flex; gap: 8px; }
+    .chat-input { flex: 1; padding: 10px 14px; border: 1.5px solid #e2e8f0; border-radius: 20px; font-size: 13px; }
     .chat-input:focus { outline: none; border-color: #6366f1; }
-    .chat-send { padding: 12px 20px; background: #6366f1; color: #fff; border: none; border-radius: 24px; font-weight: 600; cursor: pointer; }
+    .chat-send { padding: 10px 18px; background: #6366f1; color: #fff; border: none; border-radius: 20px; font-weight: 600; cursor: pointer; font-size: 13px; }
     
     /* 搜索栏 */
-    .search-bar { margin: 16px 0; }
-    .search-input { width: 100%; padding: 12px 16px; border: 1.5px solid #e2e8f0; border-radius: 10px; font-size: 14px; }
+    .search-bar { margin: 12px 0; }
+    .search-input { width: 100%; padding: 11px 14px; border: 1.5px solid #e2e8f0; border-radius: 10px; font-size: 13px; }
     .search-input:focus { outline: none; border-color: #6366f1; }
     
     /* 空态 */
-    .empty-state { text-align: center; padding: 40px 20px; color: #94a3b8; }
-    .empty-icon { font-size: 48px; margin-bottom: 12px; }
+    .empty-state { text-align: center; padding: 35px 16px; color: #94a3b8; }
+    .empty-icon { font-size: 42px; margin-bottom: 10px; }
     
     /* 设置弹窗 */
-    .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; padding: 20px; }
+    .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: flex-end; justify-content: center; }
     .modal.active { display: flex; }
-    .modal-content { background: #fff; border-radius: 16px; padding: 24px; width: 100%; max-width: 400px; max-height: 85vh; overflow-y: auto; }
-    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-    .modal-title { font-size: 18px; font-weight: 700; color: #1e293b; }
+    .modal-content { background: #fff; border-radius: 20px 20px 0 0; padding: 20px; width: 100%; max-width: 500px; max-height: 85vh; overflow-y: auto; animation: slideUp 0.3s ease; }
+    @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
+    .modal-title { font-size: 17px; font-weight: 700; color: #1e293b; }
     .modal-close { width: 32px; height: 32px; border-radius: 8px; background: #f1f5f9; border: none; cursor: pointer; font-size: 18px; color: #64748b; }
-    .form-group { margin-bottom: 16px; }
-    .form-label { display: block; font-size: 14px; color: #64748b; margin-bottom: 6px; }
-    .form-input { width: 100%; padding: 12px 14px; border: 1.5px solid #e2e8f0; border-radius: 8px; font-size: 14px; }
+    .form-group { margin-bottom: 14px; }
+    .form-label { display: block; font-size: 13px; color: #64748b; margin-bottom: 5px; }
+    .form-input { width: 100%; padding: 11px 13px; border: 1.5px solid #e2e8f0; border-radius: 8px; font-size: 13px; }
     .form-input:focus { outline: none; border-color: #6366f1; }
-    .form-textarea { width: 100%; padding: 12px 14px; border: 1.5px solid #e2e8f0; border-radius: 8px; font-size: 14px; min-height: 80px; resize: vertical; }
+    .form-textarea { width: 100%; padding: 11px 13px; border: 1.5px solid #e2e8f0; border-radius: 8px; font-size: 13px; min-height: 70px; resize: vertical; }
     .form-textarea:focus { outline: none; border-color: #6366f1; }
-    .modal-footer { display: flex; gap: 10px; margin-top: 20px; }
-    .btn-save { flex: 1; padding: 12px; background: #6366f1; color: #fff; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; }
-    .btn-cancel { flex: 1; padding: 12px; background: #f1f5f9; color: #64748b; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; }
+    .modal-footer { display: flex; gap: 10px; margin-top: 16px; }
+    .btn-save { flex: 1; padding: 12px; background: #6366f1; color: #fff; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 14px; }
+    .btn-cancel { flex: 1; padding: 12px; background: #f1f5f9; color: #64748b; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 14px; }
+    
+    /* 图片上传 */
+    .upload-area { margin-top: 8px; }
+    .upload-btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; background: #f8fafc; border: 1.5px dashed #cbd5e1; border-radius: 8px; cursor: pointer; font-size: 13px; color: #64748b; transition: all 0.2s; }
+    .upload-btn:hover { background: #f1f5f9; border-color: #6366f1; color: #6366f1; }
+    .upload-preview { margin-top: 10px; text-align: center; }
+    .upload-preview img { max-width: 100%; max-height: 200px; border-radius: 8px; border: 1px solid #e2e8f0; }
+    .upload-preview .remove-btn { margin-top: 8px; padding: 4px 12px; background: #fee2e2; color: #dc2626; border: none; border-radius: 6px; font-size: 12px; cursor: pointer; }
+    .upload-hint { font-size: 11px; color: #94a3b8; margin-top: 4px; }
+    
+    /* 响应式 */
+    @media (max-width: 480px) {
+      .top-bar { padding: 10px 12px; }
+      .top-bar-title { font-size: 16px; }
+      .top-bar-btn { padding: 5px 10px; font-size: 12px; }
+      .top-bar-logout { padding: 5px 12px; font-size: 12px; }
+      .mode-tabs { margin: 10px 12px; }
+      .mode-tab { padding: 10px; font-size: 13px; }
+      .mode-tab .tab-icon { font-size: 16px; }
+      .content-area { padding: 0 12px 12px; }
+      .order-card { padding: 12px; }
+      .order-info { font-size: 12px; }
+      .order-amount { font-size: 16px; }
+    }
+    
+    @media (min-width: 768px) {
+      .modal { align-items: center; }
+      .modal-content { border-radius: 16px; max-height: 80vh; }
+    }
   </style>
 </head>
 <body>
@@ -137,10 +165,6 @@
       <button class="top-bar-btn" onclick="openSettings('recharge')">⚙️ 充值设置</button>
       <button class="top-bar-btn" onclick="openSettings('chat')">💬 聊天设置</button>
       <button class="top-bar-logout" onclick="doLogout()">退出登录</button>
-    </div>
-  </div>
-      <button class="top-bar-btn" onclick="openSettings('chat')">💬 聊天设置</button>
-      <button class="top-bar-logout" onclick="doLogout()">退出</button>
     </div>
   </div>
   
@@ -216,6 +240,7 @@ let allConversations = [];
 let currentChatId = null;
 let currentSettingsType = null;
 let currentSettingsData = {};
+let tempImageUrls = {};
 
 // 初始化
 function init() {
@@ -343,7 +368,7 @@ function renderOrders(orders) {
           <div><span>支付方式:</span> ${payLabel}</div>
           <div><span>提交时间:</span> ${new Date(order.created_at).toLocaleString('zh-CN')}</div>
         </div>
-        ${order.screenshot_url ? `<div style="margin-top:10px"><img src="${order.screenshot_url}" style="max-width:100%;border-radius:8px;" onclick="window.open(this.src)"></div>` : ''}
+        ${order.screenshot_url ? `<img src="${order.screenshot_url}" class="order-screenshot" onclick="window.open(this.src)">` : ''}
       </div>
     `;
   }).join('');
@@ -397,7 +422,7 @@ function renderConversations(convs) {
         <div class="conv-avatar">👤</div>
         <div class="conv-info">
           <div class="conv-name">${c.visitor_name}</div>
-          <div class="conv-preview">${(c.last_message || '暂无消息').substring(0, 30)}${(c.last_message || '').length > 30 ? '...' : ''}</div>
+          <div class="conv-preview">${(c.last_message || '暂无消息').substring(0, 28)}${(c.last_message || '').length > 28 ? '...' : ''}</div>
         </div>
         <div class="conv-meta">
           <div class="conv-time">${time}</div>
@@ -496,15 +521,10 @@ async function sendReply() {
   }
 }
 
-function escapeHtml(text) {
-  const div = document.createElement('div');
-  div.textContent = text;
-  return div.innerHTML;
-}
-
 // ============ 设置管理 ============
 function openSettings(type) {
   currentSettingsType = type;
+  tempImageUrls = {};
   const modal = document.getElementById('settingsModal');
   const title = document.getElementById('settingsTitle');
   const body = document.getElementById('settingsBody');
@@ -523,6 +543,68 @@ function openSettings(type) {
 function closeSettings() {
   document.getElementById('settingsModal').classList.remove('active');
   currentSettingsType = null;
+  tempImageUrls = {};
+}
+
+// 上传图片
+async function uploadImage(file, folder, path) {
+  try {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${folder}/${Date.now()}.${fileExt}`;
+    
+    const { error: uploadError } = await rechargeClient.storage
+      .from('screenshots')
+      .upload(fileName, file, { upsert: false });
+    
+    if (uploadError) throw uploadError;
+    
+    const { data } = rechargeClient.storage
+      .from('screenshots')
+      .getPublicUrl(fileName);
+    
+    return data.publicUrl;
+  } catch(e) {
+    alert('上传失败: ' + e.message);
+    return null;
+  }
+}
+
+async function uploadChatImage(file) {
+  try {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `logo_${Date.now()}.${fileExt}`;
+    
+    const { error: uploadError } = await chatClient.storage
+      .from('settings')
+      .upload(fileName, file, { upsert: false });
+    
+    if (uploadError) throw uploadError;
+    
+    const { data } = chatClient.storage
+      .from('settings')
+      .getPublicUrl(fileName);
+    
+    return data.publicUrl;
+  } catch(e) {
+    alert('上传失败: ' + e.message);
+    return null;
+  }
+}
+
+function handleImageUpload(field, client, file) {
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    const base64 = e.target.result;
+    tempImageUrls[field] = base64;
+    
+    // 显示预览
+    const previewEl = document.getElementById(`preview_${field}`);
+    if (previewEl) {
+      previewEl.src = base64;
+      previewEl.style.display = 'block';
+    }
+  };
+  reader.readAsDataURL(file);
 }
 
 async function loadRechargeSettings() {
@@ -549,6 +631,9 @@ async function loadRechargeSettings() {
 function renderRechargeSettingsForm() {
   const body = document.getElementById('settingsBody');
   const data = currentSettingsData;
+  const wechatUrl = tempImageUrls['wechat_qr'] || data.wechat_qr || '';
+  const alipayUrl = tempImageUrls['alipay_qr'] || data.alipay_qr || '';
+  const logoUrl = tempImageUrls['logo'] || data.logo_url || '';
   
   body.innerHTML = `
     <div class="form-group">
@@ -568,14 +653,51 @@ function renderRechargeSettingsForm() {
       <input class="form-input" id="setting_kefu_link" value="${data.kefu_link || ''}" placeholder="https://">
     </div>
     <div class="form-group">
-      <label class="form-label">微信收款码URL</label>
-      <input class="form-input" id="setting_wechat_qr" value="${data.wechat_qr || ''}" placeholder="https://">
+      <label class="form-label">网站Logo图片</label>
+      <div class="upload-area">
+        <label class="upload-btn">
+          📷 选择图片
+          <input type="file" accept="image/*" style="display:none" onchange="handleImageUpload('logo', rechargeClient, this.files[0])">
+        </label>
+        <p class="upload-hint">建议尺寸: 200x200像素</p>
+      </div>
+      ${logoUrl ? `<div class="upload-preview"><img src="${logoUrl}" id="preview_logo"><br><button class="remove-btn" onclick="removePreview('logo')">移除</button></div>` : ''}
     </div>
     <div class="form-group">
-      <label class="form-label">支付宝收款码URL</label>
-      <input class="form-input" id="setting_alipay_qr" value="${data.alipay_qr || ''}" placeholder="https://">
+      <label class="form-label">微信收款码</label>
+      <div class="upload-area">
+        <label class="upload-btn">
+          📷 上传图片
+          <input type="file" accept="image/*" style="display:none" onchange="handleImageUpload('wechat_qr', rechargeClient, this.files[0])">
+        </label>
+        <p class="upload-hint">上传收款码图片</p>
+      </div>
+      ${wechatUrl.startsWith('data:image') ? `<div class="upload-preview"><img src="${wechatUrl}" id="preview_wechat_qr"><br><button class="remove-btn" onclick="removePreview('wechat_qr')">移除</button></div>` : wechatUrl ? `<div class="upload-preview"><img src="${wechatUrl}" id="preview_wechat_qr"><br><button class="remove-btn" onclick="removePreview('wechat_qr')">移除</button></div>` : ''}
+    </div>
+    <div class="form-group">
+      <label class="form-label">支付宝收款码</label>
+      <div class="upload-area">
+        <label class="upload-btn">
+          📷 上传图片
+          <input type="file" accept="image/*" style="display:none" onchange="handleImageUpload('alipay_qr', rechargeClient, this.files[0])">
+        </label>
+        <p class="upload-hint">上传收款码图片</p>
+      </div>
+      ${alipayUrl.startsWith('data:image') ? `<div class="upload-preview"><img src="${alipayUrl}" id="preview_alipay_qr"><br><button class="remove-btn" onclick="removePreview('alipay_qr')">移除</button></div>` : alipayUrl ? `<div class="upload-preview"><img src="${alipayUrl}" id="preview_alipay_qr"><br><button class="remove-btn" onclick="removePreview('alipay_qr')">移除</button></div>` : ''}
     </div>
   `;
+}
+
+function removePreview(field) {
+  delete tempImageUrls[field];
+  const previewEl = document.getElementById(`preview_${field}`);
+  if (previewEl) {
+    previewEl.style.display = 'none';
+  }
+  const btnEl = previewEl?.nextElementSibling;
+  if (btnEl && btnEl.classList.contains('remove-btn')) {
+    btnEl.remove();
+  }
 }
 
 async function saveRechargeSettings() {
@@ -586,9 +708,30 @@ async function saveRechargeSettings() {
     { key: 'notice', value: document.getElementById('setting_notice').value },
     { key: 'kefu_name', value: document.getElementById('setting_kefu_name').value },
     { key: 'kefu_link', value: document.getElementById('setting_kefu_link').value },
-    { key: 'wechat_qr', value: document.getElementById('setting_wechat_qr').value },
-    { key: 'alipay_qr', value: document.getElementById('setting_alipay_qr').value },
   ];
+  
+  // 处理微信收款码
+  if (tempImageUrls['wechat_qr']) {
+    const uploadedUrl = await uploadImage(tempImageUrls['wechat_qr'].replace('data:image/png;base64,', '').replace('data:image/jpeg;base64,', ''), 'qr', 'wechat_qr');
+    if (uploadedUrl) settings.push({ key: 'wechat_qr', value: uploadedUrl });
+  } else {
+    settings.push({ key: 'wechat_qr', value: currentSettingsData.wechat_qr || '' });
+  }
+  
+  // 处理支付宝收款码
+  if (tempImageUrls['alipay_qr']) {
+    const uploadedUrl = await uploadImage(tempImageUrls['alipay_qr'].replace('data:image/png;base64,', '').replace('data:image/jpeg;base64,', ''), 'qr', 'alipay_qr');
+    if (uploadedUrl) settings.push({ key: 'alipay_qr', value: uploadedUrl });
+  } else {
+    settings.push({ key: 'alipay_qr', value: currentSettingsData.alipay_qr || '' });
+  }
+  
+  // 处理Logo
+  if (tempImageUrls['logo']) {
+    settings.push({ key: 'logo_url', value: tempImageUrls['logo'] });
+  } else {
+    settings.push({ key: 'logo_url', value: currentSettingsData.logo_url || '' });
+  }
   
   try {
     for (const s of settings) {
@@ -625,11 +768,19 @@ async function loadChatSettings() {
 function renderChatSettingsForm() {
   const body = document.getElementById('settingsBody');
   const data = currentSettingsData;
+  const logoUrl = tempImageUrls['logo'] || data.logo || '💬';
   
   body.innerHTML = `
     <div class="form-group">
-      <label class="form-label">Logo（emoji或图片URL）</label>
-      <input class="form-input" id="setting_logo" value="${data.logo || '💬'}" placeholder="💬 或 https://">
+      <label class="form-label">Logo图片</label>
+      <div class="upload-area">
+        <label class="upload-btn">
+          📷 选择图片
+          <input type="file" accept="image/*" style="display:none" onchange="handleChatImageUpload(this.files[0])">
+        </label>
+        <p class="upload-hint">建议尺寸: 100x100像素</p>
+      </div>
+      ${logoUrl && !logoUrl.startsWith('💬') ? `<div class="upload-preview"><img src="${logoUrl}" id="preview_logo"><br><button class="remove-btn" onclick="removePreview('logo')">移除</button></div>` : ''}
     </div>
     <div class="form-group">
       <label class="form-label">应用名称</label>
@@ -646,189 +797,42 @@ function renderChatSettingsForm() {
   `;
 }
 
-async function saveChatSettings() {
-  if (!chatClient) return;
-  
-  const settings = {
-    id: 'default',
-    logo: document.getElementById('setting_logo').value,
-    app_name: document.getElementById('setting_app_name').value,
-    subtitle: document.getElementById('setting_subtitle').value,
-    welcome_text: document.getElementById('setting_welcome_text').value,
-    updated_at: new Date().toISOString()
-  };
-  
-  try {
-    const { error } = await chatClient
-      .from('settings')
-      .upsert(settings, { onConflict: 'id' });
-    
-    if (error) throw error;
-    alert('✅ 保存成功！');
-    closeSettings();
-  } catch(e) {
-    alert('保存失败: ' + e.message);
-  }
-}
-
-function saveSettings() {
-  if (currentSettingsType === 'recharge') {
-    saveRechargeSettings();
-  } else {
-    saveChatSettings();
-  }
-}
-
-// 启动
-init();
-</script>
-</body>
-</html>
-  const body = document.getElementById('settingsBody');
-  
-  modal.classList.add('active');
-  
-  if (type === 'recharge') {
-    title.textContent = '油卡充值设置';
-    loadRechargeSettings();
-  } else {
-    title.textContent = '在线客服设置';
-    loadChatSettings();
-  }
-}
-
-function closeSettings() {
-  document.getElementById('settingsModal').classList.remove('active');
-  currentSettingsType = null;
-}
-
-async function loadRechargeSettings() {
-  if (!rechargeClient) return;
-  
-  try {
-    const { data, error } = await rechargeClient
-      .from('settings')
-      .select('*');
-    
-    if (error) throw error;
-    
-    currentSettingsData = {};
-    (data || []).forEach(s => {
-      currentSettingsData[s.key] = s.value;
-    });
-    
-    renderRechargeSettingsForm();
-  } catch(e) {
-    alert('加载设置失败: ' + e.message);
-  }
-}
-
-function renderRechargeSettingsForm() {
-  const body = document.getElementById('settingsBody');
-  const data = currentSettingsData;
-  
-  body.innerHTML = `
-    <div class="form-group">
-      <label class="form-label">网站名称</label>
-      <input class="form-input" id="setting_site_name" value="${data.site_name || ''}" placeholder="油卡充值平台">
-    </div>
-    <div class="form-group">
-      <label class="form-label">首页公告</label>
-      <textarea class="form-textarea" id="setting_notice" placeholder="平台公告内容...">${data.notice || ''}</textarea>
-    </div>
-    <div class="form-group">
-      <label class="form-label">客服名称</label>
-      <input class="form-input" id="setting_kefu_name" value="${data.kefu_name || ''}" placeholder="在线客服">
-    </div>
-    <div class="form-group">
-      <label class="form-label">客服转跳链接</label>
-      <input class="form-input" id="setting_kefu_link" value="${data.kefu_link || ''}" placeholder="https://">
-    </div>
-    <div class="form-group">
-      <label class="form-label">微信收款码URL</label>
-      <input class="form-input" id="setting_wechat_qr" value="${data.wechat_qr || ''}" placeholder="https://">
-    </div>
-    <div class="form-group">
-      <label class="form-label">支付宝收款码URL</label>
-      <input class="form-input" id="setting_alipay_qr" value="${data.alipay_qr || ''}" placeholder="https://">
-    </div>
-  `;
-}
-
-async function saveRechargeSettings() {
-  if (!rechargeClient) return;
-  
-  const settings = [
-    { key: 'site_name', value: document.getElementById('setting_site_name').value },
-    { key: 'notice', value: document.getElementById('setting_notice').value },
-    { key: 'kefu_name', value: document.getElementById('setting_kefu_name').value },
-    { key: 'kefu_link', value: document.getElementById('setting_kefu_link').value },
-    { key: 'wechat_qr', value: document.getElementById('setting_wechat_qr').value },
-    { key: 'alipay_qr', value: document.getElementById('setting_alipay_qr').value },
-  ];
-  
-  try {
-    for (const s of settings) {
-      await rechargeClient
-        .from('settings')
-        .upsert({ key: s.key, value: s.value }, { onConflict: 'key' });
+function handleChatImageUpload(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    tempImageUrls['logo'] = e.target.result;
+    const previewEl = document.getElementById('preview_logo');
+    if (previewEl) {
+      previewEl.src = e.target.result;
+      previewEl.style.display = 'block';
     }
-    alert('✅ 保存成功！');
-    closeSettings();
-  } catch(e) {
-    alert('保存失败: ' + e.message);
-  }
-}
-
-async function loadChatSettings() {
-  if (!chatClient) return;
-  
-  try {
-    const { data, error } = await chatClient
-      .from('settings')
-      .select('*')
-      .eq('id', 'default')
-      .maybeSingle();
-    
-    if (error) throw error;
-    
-    currentSettingsData = data || {};
-    renderChatSettingsForm();
-  } catch(e) {
-    alert('加载设置失败: ' + e.message);
-  }
-}
-
-function renderChatSettingsForm() {
-  const body = document.getElementById('settingsBody');
-  const data = currentSettingsData;
-  
-  body.innerHTML = `
-    <div class="form-group">
-      <label class="form-label">Logo（emoji或图片URL）</label>
-      <input class="form-input" id="setting_logo" value="${data.logo || '💬'}" placeholder="💬 或 https://">
-    </div>
-    <div class="form-group">
-      <label class="form-label">应用名称</label>
-      <input class="form-input" id="setting_app_name" value="${data.app_name || ''}" placeholder="在线客服">
-    </div>
-    <div class="form-group">
-      <label class="form-label">状态栏副标题</label>
-      <input class="form-input" id="setting_subtitle" value="${data.subtitle || ''}" placeholder="在线">
-    </div>
-    <div class="form-group">
-      <label class="form-label">欢迎语</label>
-      <textarea class="form-textarea" id="setting_welcome_text" placeholder="您好，请描述您的问题...">${data.welcome_text || ''}</textarea>
-    </div>
-  `;
+  };
+  reader.readAsDataURL(file);
 }
 
 async function saveChatSettings() {
   if (!chatClient) return;
   
+  let logoUrl = tempImageUrls['logo'] || currentSettingsData.logo || '💬';
+  
+  // 如果是base64图片，先上传
+  if (logoUrl.startsWith('data:image')) {
+    // 创建临时文件
+    const byteString = atob(logoUrl.split(',')[1]);
+    const mimeString = logoUrl.split(',')[0].split(':')[1].split(';')[0];
+    const ab = new ArrayBuffer(byteString.length);
+    const ia = new Uint8Array(ab);
+    for (let i = 0; i < byteString.length; i++) {
+      ia[i] = byteString.charCodeAt(i);
+    }
+    const file = new File([ab], `logo_${Date.now()}.png`, { type: mimeString });
+    logoUrl = await uploadChatImage(file);
+  }
+  
   const settings = {
     id: 'default',
-    logo: document.getElementById('setting_logo').value,
+    logo: logoUrl,
     app_name: document.getElementById('setting_app_name').value,
     subtitle: document.getElementById('setting_subtitle').value,
     welcome_text: document.getElementById('setting_welcome_text').value,
@@ -855,6 +859,13 @@ function saveSettings() {
     saveChatSettings();
   }
 }
+
+// 点击遮罩关闭
+document.getElementById('settingsModal').addEventListener('click', function(e) {
+  if (e.target === this) {
+    closeSettings();
+  }
+});
 
 // 启动
 init();
