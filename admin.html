@@ -600,15 +600,16 @@ async function uploadChatImage(file) {
     }
     
     const fileExt = file.name.split('.').pop();
-    const fileName = `logo_${Date.now()}.${fileExt}`;
+    const fileName = `chat-logo_${Date.now()}.${fileExt}`;
     
-    const { error: uploadError } = await chatClient.storage
+    // 使用油卡充值项目的storage bucket
+    const { error: uploadError } = await rechargeClient.storage
       .from('screenshots')
       .upload(fileName, file, { upsert: false });
     
     if (uploadError) throw uploadError;
     
-    const { data } = chatClient.storage
+    const { data } = rechargeClient.storage
       .from('screenshots')
       .getPublicUrl(fileName);
     
