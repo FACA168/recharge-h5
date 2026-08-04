@@ -549,6 +549,12 @@ function closeSettings() {
 // 上传图片（接受File对象或base64字符串）
 async function uploadImage(input, folder) {
   try {
+    // 如果没有传入有效的图片数据，直接返回
+    if (!input) {
+      console.warn('uploadImage: 图片数据为空');
+      return null;
+    }
+    
     let file;
     
     // 如果是base64字符串，转换为File对象
