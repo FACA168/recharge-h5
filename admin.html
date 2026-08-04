@@ -68,11 +68,11 @@
     .unread-badge { background: #ef4444; color: #fff; font-size: 10px; padding: 2px 5px; border-radius: 10px; margin-top: 4px; display: inline-block; }
     
     /* 聊天区 */
-    .chat-area { display: none; background: #fff; border-radius: 12px; overflow: hidden; }
-    .chat-area.active { display: block; }
-    .chat-header { padding: 12px 14px; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 10px; }
+    .chat-area { display: none; background: #fff; border-radius: 12px; overflow: hidden; flex-direction: column; height: calc(100vh - 180px); }
+    .chat-area.active { display: flex; }
+    .chat-header { padding: 12px 14px; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
     .chat-back { padding: 6px 10px; background: #f1f5f9; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; }
-    .chat-messages { padding: 14px; min-height: 280px; max-height: 55vh; overflow-y: auto; }
+    .chat-messages { flex: 1; padding: 14px; overflow-y: auto; min-height: 0; }
     .msg { margin-bottom: 10px; display: flex; flex-direction: column; }
     .msg.visitor { align-items: flex-start; }
     .msg.agent { align-items: flex-end; }
@@ -80,7 +80,7 @@
     .msg.visitor .msg-bubble { background: #f1f5f9; color: #1e293b; border-radius: 10px 10px 10px 0; }
     .msg.agent .msg-bubble { background: #6366f1; color: #fff; border-radius: 10px 10px 0 10px; }
     .msg-time { font-size: 10px; color: #94a3b8; margin-top: 3px; }
-    .chat-input-area { padding: 10px 14px; border-top: 1px solid #f1f5f9; display: flex; gap: 8px; }
+    .chat-input-area { padding: 10px 14px; border-top: 1px solid #f1f5f9; display: flex; gap: 8px; flex-shrink: 0; }
     .chat-input { flex: 1; padding: 10px 14px; border: 1.5px solid #e2e8f0; border-radius: 20px; font-size: 13px; }
     .chat-input:focus { outline: none; border-color: #6366f1; }
     .chat-send { padding: 10px 18px; background: #6366f1; color: #fff; border: none; border-radius: 20px; font-weight: 600; cursor: pointer; font-size: 13px; }
