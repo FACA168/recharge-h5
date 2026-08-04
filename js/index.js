@@ -376,6 +376,11 @@ async function submitOrder() {
     } catch(e) {
         console.error('提交订单失败：', e);
         showToast('❌ 提交失败：' + e.message);
+        
+        // 跳转到失败页面
+        currentOrderId = orderId || '未知';
+        goStep(4);
+        showFail();
     }
 }
 
@@ -386,6 +391,28 @@ function showOrderResult() {
     
     if (orderIdEl) orderIdEl.textContent = '订单编号：' + currentOrderId;
     if (orderIdFailEl) orderIdFailEl.textContent = '订单编号：' + currentOrderId;
+}
+
+// ============ 提交失败 ============
+function showFail() {
+    const step4 = document.getElementById('step4');
+    if (step4) {
+        const failCard = document.createElement('div');
+        failCard.style.cssText = 'position:relative;z-index:2;text-align:center;padding:40px 20px;';
+        failCard.innerHTML = `
+            <div style="font-size:80px;margin-bottom:20px;">❌</div>
+            <h2 style="font-size:24px;font-weight:800;color:#DC2626;margin-bottom:10px;">充值失败！</h2>
+            <p style="font-size:14px;color:#6b7280;line-height:1.75;margin-bottom:8px;">请联系在线客服处理</p>
+            <p style="font-size:16px;font-weight:700;color:#1f2937;margin:20px 0;padding:15px;background:#fef2f2;border-radius:10px;border:1px solid #fecaca;">
+                订单编号：<span style="font-family:monospace;">${currentOrderId}</span>
+            </p>
+            <button onclick="contactKefu()" style="width:100%;padding:14px;background:linear-gradient(135deg,#DC2626,#EF4444);border:none;border-radius:25px;color:#fff;font-size:16px;font-weight:600;cursor:pointer;box-shadow:0 4px 12px rgba(220,38,38,0.3);">
+                联系在线客服
+            </button>
+        `;
+        step4.innerHTML = '';
+        step4.appendChild(failCard);
+    }
 }
 
 // ============ 提交成功 ============
