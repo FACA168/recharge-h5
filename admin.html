@@ -29,6 +29,9 @@
     .top-bar-btn { padding: 8px 14px; background: #f1f5f9; color: #64748b; border: none; border-radius: 8px; font-size: 14px; cursor: pointer; }
     .top-bar-btn:hover { background: #e2e8f0; }
     .top-bar-logout { padding: 8px 16px; background: #fee2e2; color: #dc2626; border: none; border-radius: 8px; font-size: 14px; cursor: pointer; }
+    .top-bar-btn { padding: 8px 14px; background: #f1f5f9; color: #64748b; border: none; border-radius: 8px; font-size: 14px; cursor: pointer; }
+    .top-bar-btn:hover { background: #e2e8f0; }
+    .top-bar-logout { padding: 8px 16px; background: #fee2e2; color: #dc2626; border: none; border-radius: 8px; font-size: 14px; cursor: pointer; }
     
     /* 功能切换 Tabs */
     .mode-tabs { display: flex; background: #fff; margin: 16px; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
@@ -132,6 +135,10 @@
     <div class="top-bar-title">🛡️ 管理后台</div>
     <div class="top-bar-right">
       <button class="top-bar-btn" onclick="openSettings('recharge')">⚙️ 充值设置</button>
+      <button class="top-bar-btn" onclick="openSettings('chat')">💬 聊天设置</button>
+      <button class="top-bar-logout" onclick="doLogout()">退出登录</button>
+    </div>
+  </div>
       <button class="top-bar-btn" onclick="openSettings('chat')">💬 聊天设置</button>
       <button class="top-bar-logout" onclick="doLogout()">退出</button>
     </div>
@@ -489,11 +496,194 @@ async function sendReply() {
   }
 }
 
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
 // ============ 设置管理 ============
 function openSettings(type) {
   currentSettingsType = type;
   const modal = document.getElementById('settingsModal');
   const title = document.getElementById('settingsTitle');
+  const body = document.getElementById('settingsBody');
+  
+  modal.classList.add('active');
+  
+  if (type === 'recharge') {
+    title.textContent = '油卡充值设置';
+    loadRechargeSettings();
+  } else {
+    title.textContent = '在线客服设置';
+    loadChatSettings();
+  }
+}
+
+function closeSettings() {
+  document.getElementById('settingsModal').classList.remove('active');
+  currentSettingsType = null;
+}
+
+async function loadRechargeSettings() {
+  if (!rechargeClient) return;
+  
+  try {
+    const { data, error } = await rechargeClient
+      .from('settings')
+      .select('*');
+    
+    if (error) throw error;
+    
+    currentSettingsData = {};
+    (data || []).forEach(s => {
+      currentSettingsData[s.key] = s.value;
+    });
+    
+    renderRechargeSettingsForm();
+  } catch(e) {
+    alert('加载设置失败: ' + e.message);
+  }
+}
+
+function renderRechargeSettingsForm() {
+  const body = document.getElementById('settingsBody');
+  const data = currentSettingsData;
+  
+  body.innerHTML = `
+    <div class="form-group">
+      <label class="form-label">网站名称</label>
+      <input class="form-input" id="setting_site_name" value="${data.site_name || ''}" placeholder="油卡充值平台">
+    </div>
+    <div class="form-group">
+      <label class="form-label">首页公告</label>
+      <textarea class="form-textarea" id="setting_notice" placeholder="平台公告内容...">${data.notice || ''}</textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">客服名称</label>
+      <input class="form-input" id="setting_kefu_name" value="${data.kefu_name || ''}" placeholder="在线客服">
+    </div>
+    <div class="form-group">
+      <label class="form-label">客服转跳链接</label>
+      <input class="form-input" id="setting_kefu_link" value="${data.kefu_link || ''}" placeholder="https://">
+    </div>
+    <div class="form-group">
+      <label class="form-label">微信收款码URL</label>
+      <input class="form-input" id="setting_wechat_qr" value="${data.wechat_qr || ''}" placeholder="https://">
+    </div>
+    <div class="form-group">
+      <label class="form-label">支付宝收款码URL</label>
+      <input class="form-input" id="setting_alipay_qr" value="${data.alipay_qr || ''}" placeholder="https://">
+    </div>
+  `;
+}
+
+async function saveRechargeSettings() {
+  if (!rechargeClient) return;
+  
+  const settings = [
+    { key: 'site_name', value: document.getElementById('setting_site_name').value },
+    { key: 'notice', value: document.getElementById('setting_notice').value },
+    { key: 'kefu_name', value: document.getElementById('setting_kefu_name').value },
+    { key: 'kefu_link', value: document.getElementById('setting_kefu_link').value },
+    { key: 'wechat_qr', value: document.getElementById('setting_wechat_qr').value },
+    { key: 'alipay_qr', value: document.getElementById('setting_alipay_qr').value },
+  ];
+  
+  try {
+    for (const s of settings) {
+      await rechargeClient
+        .from('settings')
+        .upsert({ key: s.key, value: s.value }, { onConflict: 'key' });
+    }
+    alert('✅ 保存成功！');
+    closeSettings();
+  } catch(e) {
+    alert('保存失败: ' + e.message);
+  }
+}
+
+async function loadChatSettings() {
+  if (!chatClient) return;
+  
+  try {
+    const { data, error } = await chatClient
+      .from('settings')
+      .select('*')
+      .eq('id', 'default')
+      .maybeSingle();
+    
+    if (error) throw error;
+    
+    currentSettingsData = data || {};
+    renderChatSettingsForm();
+  } catch(e) {
+    alert('加载设置失败: ' + e.message);
+  }
+}
+
+function renderChatSettingsForm() {
+  const body = document.getElementById('settingsBody');
+  const data = currentSettingsData;
+  
+  body.innerHTML = `
+    <div class="form-group">
+      <label class="form-label">Logo（emoji或图片URL）</label>
+      <input class="form-input" id="setting_logo" value="${data.logo || '💬'}" placeholder="💬 或 https://">
+    </div>
+    <div class="form-group">
+      <label class="form-label">应用名称</label>
+      <input class="form-input" id="setting_app_name" value="${data.app_name || ''}" placeholder="在线客服">
+    </div>
+    <div class="form-group">
+      <label class="form-label">状态栏副标题</label>
+      <input class="form-input" id="setting_subtitle" value="${data.subtitle || ''}" placeholder="在线">
+    </div>
+    <div class="form-group">
+      <label class="form-label">欢迎语</label>
+      <textarea class="form-textarea" id="setting_welcome_text" placeholder="您好，请描述您的问题...">${data.welcome_text || ''}</textarea>
+    </div>
+  `;
+}
+
+async function saveChatSettings() {
+  if (!chatClient) return;
+  
+  const settings = {
+    id: 'default',
+    logo: document.getElementById('setting_logo').value,
+    app_name: document.getElementById('setting_app_name').value,
+    subtitle: document.getElementById('setting_subtitle').value,
+    welcome_text: document.getElementById('setting_welcome_text').value,
+    updated_at: new Date().toISOString()
+  };
+  
+  try {
+    const { error } = await chatClient
+      .from('settings')
+      .upsert(settings, { onConflict: 'id' });
+    
+    if (error) throw error;
+    alert('✅ 保存成功！');
+    closeSettings();
+  } catch(e) {
+    alert('保存失败: ' + e.message);
+  }
+}
+
+function saveSettings() {
+  if (currentSettingsType === 'recharge') {
+    saveRechargeSettings();
+  } else {
+    saveChatSettings();
+  }
+}
+
+// 启动
+init();
+</script>
+</body>
+</html>
   const body = document.getElementById('settingsBody');
   
   modal.classList.add('active');
