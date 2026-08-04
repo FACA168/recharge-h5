@@ -594,21 +594,27 @@ async function uploadImage(input, folder) {
 
 async function uploadChatImage(file) {
   try {
+    if (!file) {
+      console.warn('uploadChatImage: 文件为空');
+      return null;
+    }
+    
     const fileExt = file.name.split('.').pop();
     const fileName = `logo_${Date.now()}.${fileExt}`;
     
     const { error: uploadError } = await chatClient.storage
-      .from('settings')
+      .from('screenshots')
       .upload(fileName, file, { upsert: false });
     
     if (uploadError) throw uploadError;
     
     const { data } = chatClient.storage
-      .from('settings')
+      .from('screenshots')
       .getPublicUrl(fileName);
     
     return data.publicUrl;
   } catch(e) {
+    console.error('上传图片失败:', e);
     alert('上传失败: ' + e.message);
     return null;
   }
