@@ -288,12 +288,6 @@ function renderOrders(orders) {
           <div><span>提交时间:</span> ${new Date(order.created_at).toLocaleString('zh-CN')}</div>
         </div>
         ${order.screenshot_url ? `<div style="margin-top:10px"><img src="${order.screenshot_url}" style="max-width:100%;border-radius:8px;" onclick="window.open(this.src)"></div>` : ''}
-        ${order.status === 'pending' ? `
-          <div class="order-actions">
-            <button class="btn-approve" onclick="updateOrderStatus('${order.order_id}', 'approved')">✅ 通过</button>
-            <button class="btn-reject" onclick="updateOrderStatus('${order.order_id}', 'rejected')">❌ 拒绝</button>
-          </div>
-        ` : ''}
       </div>
     `;
   }).join('');
