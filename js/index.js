@@ -424,9 +424,9 @@ function showSuccess() {
 
 // ============ 联系客服 ============
 function contactKefu() {
-    const kefuLink = document.getElementById('kefuLink');
-    if (kefuLink) {
-        kefuLink.click();
+    const kefuLink = settingsCache['kefu_link'];
+    if (kefuLink && kefuLink.startsWith('http')) {
+        window.open(kefuLink, '_blank');
     } else {
         showToast('请联系客服');
     }
