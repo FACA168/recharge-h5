@@ -599,23 +599,31 @@ async function uploadChatImage(file) {
       return null;
     }
     
+    console.log('uploadChatImage: 开始上传图片', file.name, '大小:', file.size);
+    
     const fileExt = file.name.split('.').pop();
     const fileName = `chat-logo_${Date.now()}.${fileExt}`;
     
     // 使用油卡充值项目的storage bucket
-    const { error: uploadError } = await rechargeClient.storage
+    const { error: uploadError, data } = await rechargeClient.storage
       .from('screenshots')
       .upload(fileName, file, { upsert: false });
     
-    if (uploadError) throw uploadError;
+    if (uploadError) {
+      console.error('uploadChatImage: 上传失败', uploadError);
+      throw uploadError;
+    }
     
-    const { data } = rechargeClient.storage
+    console.log('uploadChatImage: 上传成功', data);
+    
+    const { data: urlData } = rechargeClient.storage
       .from('screenshots')
       .getPublicUrl(fileName);
     
-    return data.publicUrl;
+    console.log('uploadChatImage: 获取URL成功', urlData.publicUrl);
+    return urlData.publicUrl;
   } catch(e) {
-    console.error('上传图片失败:', e);
+    console.error('uploadChatImage: 上传图片失败:', e);
     alert('上传失败: ' + e.message);
     return null;
   }
@@ -828,26 +836,43 @@ function renderChatSettingsForm() {
 }
 
 function handleChatImageUpload(file) {
-  if (!file) return;
+  if (!file) {
+    console.error('handleChatImageUpload: 文件为空');
+    return;
+  }
+  console.log('handleChatImageUpload: 开始上传文件', file.name);
   const reader = new FileReader();
   reader.onload = (e) => {
     tempImageUrls['logo'] = e.target.result;
+    console.log('handleChatImageUpload: base64已生成，长度:', e.target.result.length);
     const previewEl = document.getElementById('preview_logo');
     if (previewEl) {
       previewEl.src = e.target.result;
       previewEl.style.display = 'block';
+      console.log('handleChatImageUpload: 预览已显示');
+    } else {
+      console.error('handleChatImageUpload: 找不到预览元素');
     }
+  };
+  reader.onerror = (e) => {
+    console.error('handleChatImageUpload: 读取失败', e);
+    alert('读取图片失败，请重试');
   };
   reader.readAsDataURL(file);
 }
 
 async function saveChatSettings() {
-  if (!chatClient) return;
+  if (!chatClient) {
+    alert('错误: 聊天客户端未初始化');
+    return;
+  }
   
   let logoUrl = tempImageUrls['logo'] || currentSettingsData.logo || '💬';
+  console.log('saveChatSettings: logoUrl初始值', logoUrl, '类型:', typeof logoUrl);
   
   // 如果是base64图片，先上传
-  if (logoUrl.startsWith('data:image')) {
+  if (logoUrl && logoUrl.startsWith('data:image')) {
+    console.log('saveChatSettings: 检测到base64图片，开始上传...');
     // 创建临时文件
     const byteString = atob(logoUrl.split(',')[1]);
     const mimeString = logoUrl.split(',')[0].split(':')[1].split(';')[0];
@@ -857,7 +882,9 @@ async function saveChatSettings() {
       ia[i] = byteString.charCodeAt(i);
     }
     const file = new File([ab], `logo_${Date.now()}.png`, { type: mimeString });
+    console.log('saveChatSettings: 创建File对象成功', file.name, file.size);
     logoUrl = await uploadChatImage(file);
+    console.log('saveChatSettings: 上传完成，logoUrl:', logoUrl);
   }
   
   const settings = {
@@ -869,15 +896,22 @@ async function saveChatSettings() {
     updated_at: new Date().toISOString()
   };
   
+  console.log('saveChatSettings: 准备保存', settings);
+  
   try {
     const { error } = await chatClient
       .from('settings')
       .upsert(settings, { onConflict: 'id' });
     
-    if (error) throw error;
+    if (error) {
+      console.error('saveChatSettings: 数据库错误', error);
+      throw error;
+    }
+    console.log('saveChatSettings: 保存成功');
     alert('✅ 保存成功！');
     closeSettings();
   } catch(e) {
+    console.error('saveChatSettings: 保存失败', e);
     alert('保存失败: ' + e.message);
   }
 }
