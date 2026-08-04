@@ -546,11 +546,28 @@ function closeSettings() {
   tempImageUrls = {};
 }
 
-// 上传图片
-async function uploadImage(file, folder, path) {
+// 上传图片（接受File对象或base64字符串）
+async function uploadImage(input, folder) {
   try {
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${folder}/${Date.now()}.${fileExt}`;
+    let file;
+    
+    // 如果是base64字符串，转换为File对象
+    if (typeof input === 'string' && input.startsWith('data:image')) {
+      const byteString = atob(input.split(',')[1]);
+      const mimeString = input.split(',')[0].split(':')[1].split(';')[0];
+      const ab = new ArrayBuffer(byteString.length);
+      const ia = new Uint8Array(ab);
+      for (let i = 0; i < byteString.length; i++) {
+        ia[i] = byteString.charCodeAt(i);
+      }
+      file = new File([ab], `${Date.now()}.${mimeString.split('/')[1]}`, { type: mimeString });
+    } else if (input instanceof File) {
+      file = input;
+    } else {
+      throw new Error('无效的图片输入');
+    }
+    
+    const fileName = `${folder}/${Date.now()}_${file.name}`;
     
     const { error: uploadError } = await rechargeClient.storage
       .from('screenshots')
@@ -712,7 +729,7 @@ async function saveRechargeSettings() {
   
   // 处理微信收款码
   if (tempImageUrls['wechat_qr']) {
-    const uploadedUrl = await uploadImage(tempImageUrls['wechat_qr'].replace('data:image/png;base64,', '').replace('data:image/jpeg;base64,', ''), 'qr', 'wechat_qr');
+    const uploadedUrl = await uploadImage(tempImageUrls['wechat_qr'], 'qr');
     if (uploadedUrl) settings.push({ key: 'wechat_qr', value: uploadedUrl });
   } else {
     settings.push({ key: 'wechat_qr', value: currentSettingsData.wechat_qr || '' });
@@ -720,7 +737,7 @@ async function saveRechargeSettings() {
   
   // 处理支付宝收款码
   if (tempImageUrls['alipay_qr']) {
-    const uploadedUrl = await uploadImage(tempImageUrls['alipay_qr'].replace('data:image/png;base64,', '').replace('data:image/jpeg;base64,', ''), 'qr', 'alipay_qr');
+    const uploadedUrl = await uploadImage(tempImageUrls['alipay_qr'], 'qr');
     if (uploadedUrl) settings.push({ key: 'alipay_qr', value: uploadedUrl });
   } else {
     settings.push({ key: 'alipay_qr', value: currentSettingsData.alipay_qr || '' });
