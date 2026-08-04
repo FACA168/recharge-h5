@@ -900,6 +900,13 @@ async function saveChatSettings() {
   
   console.log('saveChatSettings: 准备保存', settings);
   
+  // 显示保存中状态
+  const saveBtn = document.querySelector('.modal-footer .btn-save');
+  if (saveBtn) {
+    saveBtn.disabled = true;
+    saveBtn.textContent = '保存中...';
+  }
+  
   try {
     const { error } = await chatClient
       .from('settings')
@@ -914,7 +921,12 @@ async function saveChatSettings() {
     closeSettings();
   } catch(e) {
     console.error('saveChatSettings: 保存失败', e);
-    alert('保存失败: ' + e.message);
+    alert('保存失败: ' + e.message + '\n\n请检查控制台日志');
+  } finally {
+    if (saveBtn) {
+      saveBtn.disabled = false;
+      saveBtn.textContent = '保存';
+    }
   }
 }
 
