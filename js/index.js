@@ -364,14 +364,11 @@ async function submitOrder() {
         
         showToast('✅ 订单提交成功！');
         
-        // 跳转到结果页并显示成功
+        // 清空表单并返回首页
         currentOrderId = orderId;
-        goStep(4);
-        showSuccess();
-        
-        // 清空表单
         phoneInput.value = '';
         uploadedFile = null;
+        goHome();
         
     } catch(e) {
         console.error('提交订单失败：', e);
@@ -412,37 +409,6 @@ function showFail() {
         `;
         step4.innerHTML = '';
         step4.appendChild(failCard);
-    }
-}
-
-// ============ 提交成功 ============
-function showSuccess() {
-    // 隐藏处理中状态
-    const progressState = document.getElementById('resultProgressState');
-    if (progressState) progressState.style.display = 'none';
-    
-    // 显示成功状态（创建一个新的成功提示）
-    const step4 = document.getElementById('step4');
-    if (step4) {
-        // 创建成功提示卡片
-        const successCard = document.createElement('div');
-        successCard.style.cssText = 'position:relative;z-index:2;text-align:center;padding:40px 20px;';
-        successCard.innerHTML = `
-            <div style="font-size:80px;margin-bottom:20px;">✅</div>
-            <h2 style="font-size:24px;font-weight:800;color:#16A34A;margin-bottom:10px;">提交成功！</h2>
-            <p style="font-size:14px;color:#6b7280;line-height:1.75;margin-bottom:8px;">您的充值订单已提交，请耐心等待审核。</p>
-            <p style="font-size:16px;font-weight:700;color:#1f2937;margin:20px 0;padding:15px;background:#f0fdf4;border-radius:10px;border:1px solid #bbf7d6;">
-                订单编号：<span id="finalOrderId" style="font-family:monospace;">${currentOrderId}</span>
-            </p>
-            <p style="font-size:12px;color:#9ca3af;margin-bottom:25px;">客服将在24小时内处理，如有问题请联系客服</p>
-            <button onclick="goHome()" style="width:100%;padding:14px;background:linear-gradient(135deg,#5B9BD5,#6BB5D6);border:none;border-radius:25px;color:#fff;font-size:16px;font-weight:600;cursor:pointer;box-shadow:0 4px 12px rgba(91,155,213,0.3);">
-                返回首页继续充值
-            </button>
-        `;
-        
-        // 清除旧内容并添加新内容
-        step4.innerHTML = '';
-        step4.appendChild(successCard);
     }
 }
 
