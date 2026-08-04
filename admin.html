@@ -1,185 +1,473 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>充值中心 - 管理后台</title>
-    <!-- 引入 Supabase JS SDK -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <!-- 外部样式 -->
-    <link rel="stylesheet" href="css/admin.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>统一管理后台</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f1f5f9; }
+    
+    /* 登录页 */
+    .login-page { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+    .login-box { background: #fff; border-radius: 16px; padding: 40px 30px; width: 100%; max-width: 380px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+    .login-title { text-align: center; font-size: 24px; font-weight: 700; color: #1e293b; margin-bottom: 8px; }
+    .login-subtitle { text-align: center; color: #64748b; font-size: 14px; margin-bottom: 24px; }
+    .login-input { width: 100%; padding: 14px 16px; border: 1.5px solid #e2e8f0; border-radius: 10px; font-size: 15px; margin-bottom: 12px; transition: border-color 0.2s; }
+    .login-input:focus { outline: none; border-color: #6366f1; }
+    .login-btn { width: 100%; padding: 14px; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #fff; border: none; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; }
+    .login-error { color: #ef4444; font-size: 13px; margin-top: 12px; text-align: center; display: none; }
+    
+    /* 主界面 */
+    .main-page { display: none; min-height: 100vh; }
+    
+    /* 顶部导航 */
+    .top-bar { background: #fff; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 100; }
+    .top-bar-title { font-size: 18px; font-weight: 700; color: #1e293b; }
+    .top-bar-logout { padding: 8px 16px; background: #fee2e2; color: #dc2626; border: none; border-radius: 8px; font-size: 14px; cursor: pointer; }
+    
+    /* 功能切换 Tabs */
+    .mode-tabs { display: flex; background: #fff; margin: 16px; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+    .mode-tab { flex: 1; padding: 14px; text-align: center; font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.2s; border: none; background: #fff; color: #64748b; }
+    .mode-tab.active { background: #6366f1; color: #fff; }
+    .mode-tab .tab-icon { font-size: 20px; display: block; margin-bottom: 4px; }
+    
+    /* 内容区域 */
+    .content-area { padding: 0 16px 16px; }
+    .panel { display: none; }
+    .panel.active { display: block; }
+    
+    /* 订单卡片 */
+    .order-card { background: #fff; border-radius: 12px; padding: 16px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+    .order-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .order-id { font-size: 13px; color: #64748b; }
+    .order-status { padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+    .status-pending { background: #fef3c7; color: #d97706; }
+    .status-approved { background: #dcfce7; color: #16a34a; }
+    .status-rejected { background: #fee2e2; color: #dc2626; }
+    .order-info { font-size: 14px; color: #334155; line-height: 1.8; }
+    .order-info span { color: #64748b; }
+    .order-amount { font-size: 20px; font-weight: 700; color: #e8941c; margin: 8px 0; }
+    .order-actions { display: flex; gap: 10px; margin-top: 12px; }
+    .btn-approve { flex: 1; padding: 10px; background: #dcfce7; color: #16a34a; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; }
+    .btn-reject { flex: 1; padding: 10px; background: #fee2e2; color: #dc2626; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; }
+    
+    /* 客服列表 */
+    .conv-list { background: #fff; border-radius: 12px; overflow: hidden; }
+    .conv-item { padding: 14px 16px; border-bottom: 1px solid #f1f5f9; cursor: pointer; display: flex; align-items: center; gap: 12px; }
+    .conv-item:last-child { border-bottom: none; }
+    .conv-item.active { background: #eff6ff; }
+    .conv-avatar { width: 44px; height: 44px; border-radius: 50%; background: #e0e7ff; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+    .conv-info { flex: 1; min-width: 0; }
+    .conv-name { font-weight: 600; color: #1e293b; font-size: 15px; }
+    .conv-preview { color: #64748b; font-size: 13px; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .conv-meta { text-align: right; flex-shrink: 0; }
+    .conv-time { font-size: 12px; color: #94a3b8; }
+    .unread-badge { background: #ef4444; color: #fff; font-size: 11px; padding: 2px 6px; border-radius: 10px; margin-top: 4px; display: inline-block; }
+    
+    /* 聊天区 */
+    .chat-area { display: none; background: #fff; border-radius: 12px; overflow: hidden; }
+    .chat-area.active { display: block; }
+    .chat-header { padding: 14px 16px; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 12px; }
+    .chat-back { padding: 6px 12px; background: #f1f5f9; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; }
+    .chat-messages { padding: 16px; min-height: 300px; max-height: 50vh; overflow-y: auto; }
+    .msg { margin-bottom: 12px; display: flex; flex-direction: column; }
+    .msg.visitor { align-items: flex-start; }
+    .msg.agent { align-items: flex-end; }
+    .msg-bubble { padding: 10px 14px; border-radius: 12px; max-width: 80%; font-size: 14px; line-height: 1.5; }
+    .msg.visitor .msg-bubble { background: #f1f5f9; color: #1e293b; border-radius: 12px 12px 12px 0; }
+    .msg.agent .msg-bubble { background: #6366f1; color: #fff; border-radius: 12px 12px 0 12px; }
+    .msg-time { font-size: 11px; color: #94a3b8; margin-top: 4px; }
+    .chat-input-area { padding: 12px 16px; border-top: 1px solid #f1f5f9; display: flex; gap: 10px; }
+    .chat-input { flex: 1; padding: 12px 16px; border: 1.5px solid #e2e8f0; border-radius: 24px; font-size: 14px; }
+    .chat-input:focus { outline: none; border-color: #6366f1; }
+    .chat-send { padding: 12px 20px; background: #6366f1; color: #fff; border: none; border-radius: 24px; font-weight: 600; cursor: pointer; }
+    
+    /* 空态 */
+    .empty-state { text-align: center; padding: 40px 20px; color: #94a3b8; }
+    .empty-icon { font-size: 48px; margin-bottom: 12px; }
+    
+    /* 搜索栏 */
+    .search-bar { margin: 16px 0; }
+    .search-input { width: 100%; padding: 12px 16px; border: 1.5px solid #e2e8f0; border-radius: 10px; font-size: 14px; }
+    .search-input:focus { outline: none; border-color: #6366f1; }
+  </style>
 </head>
 <body>
 
-<!-- ===== 顶部导航 ===== -->
-<header class="header" id="adminHeader" style="display:none;">
-    <span class="header-title">🛡️ 管理后台</span>
-    <button class="header-btn danger" onclick="logout()">退出登录</button>
-</header>
-
-<!-- ===== 顶部 Tab 导航 ===== -->
-<nav class="top-tab-bar" id="topTabBar" style="display:none;">
-    <button class="top-tab-item active" onclick="switchTab('orders')">
-        <span class="top-tab-icon">📋</span><span class="top-tab-name">订单管理</span>
-    </button>
-    <button class="top-tab-item" onclick="switchTab('settings')">
-        <span class="top-tab-icon">⚙️</span><span class="top-tab-name">系统设置</span>
-    </button>
-</nav>
-
-<!-- ===== 主内容 ===== -->
-<main class="main">
-
-    <!-- ==================== 登录页 ==================== -->
-    <section class="page-section active" id="loginPage">
-        <div class="login-container">
-            <div class="login-logo">🛡️</div>
-            <h1 class="login-title">管理员登录</h1>
-            <div class="login-card">
-                <input type="text" class="login-input" id="loginUser" placeholder="请输入账号" autocomplete="username">
-                <input type="password" class="login-input" id="loginPass" placeholder="请输入密码" autocomplete="current-password">
-                <button class="login-btn" onclick="doLogin()">登 录</button>
-                <p class="login-error" id="loginError">账号或密码错误！</p>
-            </div>
-        </div>
-    </section>
-
-    <!-- ==================== 后台主页 ==================== -->
-    <div id="dashboardArea" style="display:none;">
-
-        <!-- 订单管理 Tab -->
-        <section class="page-section active has-tabbar" id="tabOrders">
-            <div class="stats-grid">
-                <div class="stat-card"><div class="stat-num" id="statTotal">0</div><div class="stat-label">总订单</div></div>
-                <div class="stat-card"><div class="stat-num" id="statPending" style="color:#d97706;">0</div><div class="stat-label">待审核</div></div>
-                <div class="stat-card"><div class="stat-num" id="statApproved" style="color:#16a34a;">0</div><div class="stat-label">已通过</div></div>
-            </div>
-
-            <div class="search-box">
-                <input type="text" class="search-input" id="searchInput" placeholder="搜索手机号/订单号/代金券...">
-                <button class="search-btn" onclick="searchOrders()">🔍 搜索</button>
-            </div>
-
-            <div class="card">
-                <div class="card-header">
-                    <h2 class="card-title">📋 订单列表</h2>
-                    <span class="card-badge" id="orderCount">0 条</span>
-                </div>
-                <div class="order-list" id="orderList">
-                    <div class="empty-state">
-                        <div class="empty-icon">📭</div>
-                        <p>加载中...</p>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- 系统设置 Tab -->
-        <section class="page-section has-tabbar" id="tabSettings">
-            <div class="card">
-                <div class="card-header"><h2 class="card-title">⚙️ 系统设置</h2></div>
-
-                <div class="setting-group" style="background:#FFF7ED;border:1.5px solid #FDBA74;border-radius:12px;padding:12px;">
-                    <label class="setting-label">🚦 暂停访问（维护模式）</label>
-                    <select class="setting-input" id="setMaintenance">
-                        <option value="">正常营业（用户可正常充值）</option>
-                        <option value="on">暂停访问（前台显示维护页）</option>
-                    </select>
-                    <p style="font-size:12px;color:#9a3412;margin-top:6px;">开启后，所有用户打开前台都会看到"暂停服务中"，无法充值。需要时再改回"正常营业"即可恢复。</p>
-                </div>
-
-                <div class="setting-group">
-                    <label class="setting-label">🖼️ 网站 Logo</label>
-                    <div class="qr-upload-area" id="logoUploadArea">
-                        <span style="font-size:32px;">🖼️</span>
-                        <p style="font-size:13px;color:#64748b;margin-top:4px;" id="logoUploadText">点击上传 Logo 图片（建议正方形）</p>
-                        <img class="qr-preview-img" id="previewLogo" alt="Logo 预览">
-                        <input type="file" id="fileLogo" class="qr-input-overlay" accept="image/*"
-                            onchange="previewQr(this,'previewLogo','logoUploadText')">
-                    </div>
-                </div>
-                <div class="setting-group">
-                    <label class="setting-label">🏷️ 网站名称</label>
-                    <input type="text" class="setting-input" id="setSiteName" placeholder="例如：充值中心">
-                </div>
-                <div class="setting-group">
-                    <label class="setting-label">📢 首页公告</label>
-                    <textarea class="setting-textarea" id="setNotice" placeholder="输入首页公告文字..."></textarea>
-                </div>
-                <div class="setting-group">
-                    <label class="setting-label">🎉 Banner文案</label>
-                    <input type="text" class="setting-input" id="setBanner" placeholder="例如：🎉 品牌充值 · 代金券限时领">
-                </div>
-                <div class="setting-group">
-                    <label class="setting-label">💚 微信收款码</label>
-                    <div class="qr-upload-area" id="wechatUploadArea">
-                        <span style="font-size:32px;">📷</span>
-                        <p style="font-size:13px;color:#64748b;margin-top:4px;" id="wechatUploadText">点击上传微信收款码图片</p>
-                        <img class="qr-preview-img" id="previewWechat" alt="微信收款码预览">
-                        <input type="file" id="fileWechat" class="qr-input-overlay" accept="image/*"
-                            onchange="previewQr(this,'previewWechat','wechatUploadText')">
-                    </div>
-                </div>
-                <div class="setting-group">
-                    <label class="setting-label">💙 支付宝收款码</label>
-                    <div class="qr-upload-area" id="alipayUploadArea">
-                        <span style="font-size:32px;">📷</span>
-                        <p style="font-size:13px;color:#64748b;margin-top:4px;" id="alipayUploadText">点击上传支付宝收款码图片</p>
-                        <img class="qr-preview-img" id="previewAlipay" alt="支付宝收款码预览">
-                        <input type="file" id="fileAlipay" class="qr-input-overlay" accept="image/*"
-                            onchange="previewQr(this,'previewAlipay','alipayUploadText')">
-                    </div>
-                </div>
-                <div class="setting-group">
-                    <label class="setting-label">💬 客服名称</label>
-                    <input type="text" class="setting-input" id="setKefuName" placeholder="例如：在线客服小助手">
-                </div>
-                <div class="setting-group">
-                    <label class="setting-label">🔗 客服转跳链接</label>
-                    <input type="text" class="setting-input" id="setKefuLink" placeholder="例如：客服系统/微信客服/企业微信链接">
-                    <p style="font-size:12px;color:#9ca3af;margin-top:6px;">填了之后，用户点"联系在线客服"会直接转跳到这个链接；留空则不会跳转（建议填写你的客服链接）。</p>
-                </div>
-                <button class="save-btn" onclick="saveSettings()">💾 保存所有设置</button>
-            </div>
-
-            <div class="card">
-                <div class="card-header"><h2 class="card-title">🔐 修改管理员密码</h2></div>
-                <div class="setting-group">
-                    <label class="setting-label">当前密码</label>
-                    <input type="password" class="setting-input" id="oldPass" placeholder="输入当前密码">
-                </div>
-                <div class="setting-group">
-                    <label class="setting-label">新密码</label>
-                    <input type="password" class="setting-input" id="newPass" placeholder="输入新密码">
-                </div>
-                <div class="setting-group">
-                    <label class="setting-label">确认新密码</label>
-                    <input type="password" class="setting-input" id="confirmPass" placeholder="再次输入新密码">
-                </div>
-                <button class="save-btn" style="background:linear-gradient(135deg,#6366f1,#4f46e5);" onclick="changePassword()">
-                    🔑 修改密码
-                </button>
-            </div>
-        </section>
-    </div>
-
-</main>
-
-<!-- ===== 订单详情弹窗 ===== -->
-<div class="modal-overlay" id="orderModal">
-    <div class="modal-content">
-        <div class="modal-handle"></div>
-        <h3 class="modal-title">订单详情</h3>
-        <div id="modalDetailBody"></div>
-        <div class="modal-actions" id="modalActions"></div>
-    </div>
+<!-- 登录页 -->
+<div class="login-page" id="loginPage">
+  <div class="login-box">
+    <div class="login-title">🛡️ 统一后台</div>
+    <div class="login-subtitle">油卡充值 + 在线客服管理</div>
+    <input class="login-input" id="loginUser" placeholder="用户名" autocomplete="username">
+    <input class="login-input" id="loginPass" placeholder="密码" autocomplete="current-password" type="password">
+    <button class="login-btn" onclick="doLogin()">登 录</button>
+    <p class="login-error" id="loginError">账号或密码错误！</p>
+  </div>
 </div>
 
-<!-- Toast -->
-<div class="toast" id="toast"></div>
+<!-- 主界面 -->
+<div class="main-page" id="mainPage">
+  <!-- 顶部导航 -->
+  <div class="top-bar">
+    <div class="top-bar-title">🛡️ 管理后台</div>
+    <button class="top-bar-logout" onclick="doLogout()">退出登录</button>
+  </div>
+  
+  <!-- 功能切换 -->
+  <div class="mode-tabs">
+    <button class="mode-tab active" onclick="switchMode('orders')">
+      <span class="tab-icon">📋</span>
+      订单管理
+    </button>
+    <button class="mode-tab" onclick="switchMode('chat')">
+      <span class="tab-icon">💬</span>
+      在线客服
+    </button>
+  </div>
+  
+  <div class="content-area">
+    <!-- 订单管理面板 -->
+    <div class="panel active" id="ordersPanel">
+      <div class="search-bar">
+        <input class="search-input" id="orderSearch" placeholder="搜索手机号/订单号..." oninput="searchOrders()">
+      </div>
+      <div id="orderList"></div>
+    </div>
+    
+    <!-- 客服面板 -->
+    <div class="panel" id="chatPanel">
+      <div id="convList" class="conv-list"></div>
+      <div class="chat-area" id="chatArea">
+        <div class="chat-header">
+          <button class="chat-back" onclick="backToList()">← 返回</button>
+          <strong id="chatName">会话</strong>
+        </div>
+        <div class="chat-messages" id="chatMessages"></div>
+        <div class="chat-input-area">
+          <input class="chat-input" id="chatInput" placeholder="输入回复..." onkeydown="if(event.key==='Enter')sendReply()">
+          <button class="chat-send" onclick="sendReply()">发送</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
-<!-- 外部脚本 -->
-<script src="js/admin.js"></script>
+<script>
+// 配置
+const RECHARGE_URL = 'https://unytaslvyaytlqdmwavm.supabase.co';
+const RECHARGE_KEY = 'eyJhbG...UET0';
+const CHAT_URL = 'https://afomopohtwwytfeeznur.supabase.co';
+const CHAT_KEY = 'eyJhbG...qpTM';
+const ADMIN_USER = 'admin';
+const ADMIN_PASS = 'admin123';
 
+// 状态
+let rechargeClient = null;
+let chatClient = null;
+let isLoggedIn = false;
+let allOrders = [];
+let allConversations = [];
+let currentChatId = null;
+let currentTab = 'open';
+
+// 初始化
+function init() {
+  try {
+    rechargeClient = supabase.createClient(RECHARGE_URL, RECHARGE_KEY);
+    chatClient = supabase.createClient(CHAT_URL, CHAT_KEY);
+  } catch(e) {
+    console.error('Supabase初始化失败:', e);
+  }
+}
+
+// 登录
+function doLogin() {
+  const user = document.getElementById('loginUser').value.trim();
+  const pass = document.getElementById('loginPass').value.trim();
+  const errEl = document.getElementById('loginError');
+  
+  if (!user || !pass) {
+    errEl.textContent = '请输入账号和密码';
+    errEl.style.display = 'block';
+    return;
+  }
+  
+  if (user !== ADMIN_USER || pass !== ADMIN_PASS) {
+    errEl.textContent = '账号或密码错误！';
+    errEl.style.display = 'block';
+    return;
+  }
+  
+  isLoggedIn = true;
+  document.getElementById('loginPage').style.display = 'none';
+  document.getElementById('mainPage').style.display = 'block';
+  
+  loadOrders();
+  loadConversations();
+}
+
+// 退出
+function doLogout() {
+  isLoggedIn = false;
+  document.getElementById('loginPage').style.display = 'flex';
+  document.getElementById('mainPage').style.display = 'none';
+  document.getElementById('loginUser').value = '';
+  document.getElementById('loginPass').value = '';
+}
+
+// 切换模式
+function switchMode(mode) {
+  document.querySelectorAll('.mode-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  
+  if (mode === 'orders') {
+    document.querySelector('.mode-tab:nth-child(1)').classList.add('active');
+    document.getElementById('ordersPanel').classList.add('active');
+    document.getElementById('chatArea').classList.remove('active');
+    document.getElementById('convList').style.display = 'block';
+  } else {
+    document.querySelector('.mode-tab:nth-child(2)').classList.add('active');
+    document.getElementById('chatPanel').classList.add('active');
+  }
+}
+
+// ============ 订单管理 ============
+async function loadOrders() {
+  if (!rechargeClient) return;
+  
+  const listEl = document.getElementById('orderList');
+  listEl.innerHTML = '<div class="empty-state"><div class="empty-icon">⏳</div><p>加载中...</p></div>';
+  
+  try {
+    const { data, error } = await rechargeClient
+      .from('orders')
+      .select('*')
+      .order('created_at', { ascending: false });
+    
+    if (error) throw error;
+    allOrders = data || [];
+    renderOrders(allOrders);
+  } catch(e) {
+    console.error('加载订单失败:', e);
+    listEl.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><p>加载失败: ${e.message}</p></div>`;
+  }
+}
+
+function renderOrders(orders) {
+  const listEl = document.getElementById('orderList');
+  
+  if (orders.length === 0) {
+    listEl.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><p>暂无订单</p></div>';
+    return;
+  }
+  
+  listEl.innerHTML = orders.map(order => {
+    const statusMap = {
+      pending: { text: '待审核', cls: 'status-pending' },
+      approved: { text: '已通过', cls: 'status-approved' },
+      rejected: { text: '已拒绝', cls: 'status-rejected' }
+    };
+    const st = statusMap[order.status] || statusMap.pending;
+    const payLabel = order.pay_method === 'wechat' ? '微信' : '支付宝';
+    
+    return `
+      <div class="order-card">
+        <div class="order-header">
+          <span class="order-id">${order.order_id}</span>
+          <span class="order-status ${st.cls}">${st.text}</span>
+        </div>
+        <div class="order-info">
+          <div><span>手机号:</span> ${order.phone || '-'}</div>
+          <div><span>充值金额:</span> ¥${order.recharge}</div>
+          <div><span>代金券抵扣:</span> -¥${order.coupon_deduct || 0}</div>
+          <div class="order-amount">实付: ¥${order.amount}</div>
+          <div><span>支付方式:</span> ${payLabel}</div>
+          <div><span>提交时间:</span> ${new Date(order.created_at).toLocaleString('zh-CN')}</div>
+        </div>
+        ${order.screenshot_url ? `<div style="margin-top:10px"><img src="${order.screenshot_url}" style="max-width:100%;border-radius:8px;" onclick="window.open(this.src)"></div>` : ''}
+        ${order.status === 'pending' ? `
+          <div class="order-actions">
+            <button class="btn-approve" onclick="updateOrderStatus('${order.order_id}', 'approved')">✅ 通过</button>
+            <button class="btn-reject" onclick="updateOrderStatus('${order.order_id}', 'rejected')">❌ 拒绝</button>
+          </div>
+        ` : ''}
+      </div>
+    `;
+  }).join('');
+}
+
+function searchOrders() {
+  const kw = document.getElementById('orderSearch').value.trim().toLowerCase();
+  if (!kw) {
+    renderOrders(allOrders);
+    return;
+  }
+  const filtered = allOrders.filter(o => 
+    (o.phone && o.phone.includes(kw)) || 
+    (o.order_id && o.order_id.toLowerCase().includes(kw))
+  );
+  renderOrders(filtered);
+}
+
+async function updateOrderStatus(orderId, newStatus) {
+  if (!rechargeClient) return;
+  
+  try {
+    const { error } = await rechargeClient
+      .from('orders')
+      .update({ status: newStatus })
+      .eq('order_id', orderId);
+    
+    if (error) throw error;
+    
+    const msg = newStatus === 'approved' ? '✅ 已标记为通过' : '❌ 已标记为拒绝';
+    alert(msg);
+    loadOrders();
+  } catch(e) {
+    alert('操作失败: ' + e.message);
+  }
+}
+
+// ============ 在线客服 ============
+async function loadConversations() {
+  if (!chatClient) return;
+  
+  try {
+    const { data, error } = await chatClient
+      .from('conversations')
+      .select('*')
+      .order('updated_at', { ascending: false });
+    
+    if (error) throw error;
+    allConversations = data || [];
+    renderConversations(allConversations);
+  } catch(e) {
+    console.error('加载会话失败:', e);
+  }
+}
+
+function renderConversations(convs) {
+  const listEl = document.getElementById('convList');
+  
+  if (convs.length === 0) {
+    listEl.innerHTML = '<div class="empty-state"><div class="empty-icon">💬</div><p>暂无会话</p></div>';
+    return;
+  }
+  
+  listEl.innerHTML = convs.map(c => {
+    const unread = c.unread_count > 0 ? `<span class="unread-badge">${c.unread_count}</span>` : '';
+    const time = c.updated_at ? new Date(c.updated_at).toLocaleTimeString('zh-CN', {hour: '2-digit', minute:'2-digit'}) : '';
+    
+    return `
+      <div class="conv-item" onclick="openChat('${c.id}', '${c.visitor_name}')">
+        <div class="conv-avatar">👤</div>
+        <div class="conv-info">
+          <div class="conv-name">${c.visitor_name}</div>
+          <div class="conv-preview">${(c.last_message || '暂无消息').substring(0, 30)}${(c.last_message || '').length > 30 ? '...' : ''}</div>
+        </div>
+        <div class="conv-meta">
+          <div class="conv-time">${time}</div>
+          ${unread}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function openChat(id, name) {
+  currentChatId = id;
+  document.getElementById('chatName').textContent = name;
+  document.getElementById('convList').style.display = 'none';
+  document.getElementById('chatArea').classList.add('active');
+  loadMessages(id);
+}
+
+function backToList() {
+  currentChatId = null;
+  document.getElementById('chatArea').classList.remove('active');
+  document.getElementById('convList').style.display = 'block';
+  loadConversations();
+}
+
+async function loadMessages(convId) {
+  if (!chatClient) return;
+  
+  const msgEl = document.getElementById('chatMessages');
+  msgEl.innerHTML = '<div class="empty-state">加载中...</div>';
+  
+  try {
+    const { data, error } = await chatClient
+      .from('messages')
+      .select('*')
+      .eq('conversation_id', convId)
+      .order('created_at', { ascending: true });
+    
+    if (error) throw error;
+    
+    if (!data.length) {
+      msgEl.innerHTML = '<div class="empty-state">还没有消息</div>';
+      return;
+    }
+    
+    msgEl.innerHTML = data.map(m => {
+      const time = new Date(m.created_at).toLocaleTimeString('zh-CN', {hour: '2-digit', minute:'2-digit'});
+      const isAgent = m.sender === 'agent';
+      return `
+        <div class="msg ${m.sender}">
+          <div class="msg-bubble">${escapeHtml(m.content)}</div>
+          <div class="msg-time">${time}</div>
+        </div>
+      `;
+    }).join('');
+    
+    msgEl.scrollTop = msgEl.scrollHeight;
+  } catch(e) {
+    msgEl.innerHTML = `<div class="empty-state">加载失败: ${e.message}</div>`;
+  }
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+async function sendReply() {
+  if (!currentChatId || !chatClient) return;
+  
+  const input = document.getElementById('chatInput');
+  const text = input.value.trim();
+  if (!text) return;
+  
+  input.value = '';
+  
+  try {
+    const { error } = await chatClient
+      .from('messages')
+      .insert({
+        conversation_id: currentChatId,
+        sender: 'agent',
+        content: text
+      });
+    
+    if (error) throw error;
+    
+    await chatClient
+      .from('conversations')
+      .update({ last_message: text, updated_at: new Date().toISOString() })
+      .eq('id', currentChatId);
+    
+    loadMessages(currentChatId);
+  } catch(e) {
+    alert('发送失败: ' + e.message);
+  }
+}
+
+// 启动
+init();
+</script>
 </body>
 </html>
