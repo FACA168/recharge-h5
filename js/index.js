@@ -419,10 +419,7 @@ function showFail() {
 function showSuccess() {
     // 隐藏处理中状态
     const progressState = document.getElementById('resultProgressState');
-    const failState = document.getElementById('resultFailState');
-    
     if (progressState) progressState.style.display = 'none';
-    if (failState) failState.style.display = 'none';
     
     // 显示成功状态（创建一个新的成功提示）
     const step4 = document.getElementById('step4');
