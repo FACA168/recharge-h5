@@ -773,13 +773,21 @@ async function saveRechargeSettings() {
   
   try {
     for (const s of settings) {
-      await rechargeClient
+      console.log('saveRechargeSettings: 保存设置', s.key, '=', s.value);
+      const { error } = await rechargeClient
         .from('settings')
         .upsert({ key: s.key, value: s.value }, { onConflict: 'key' });
+      if (error) {
+        console.error('saveRechargeSettings: 保存失败', s.key, error);
+        throw error;
+      }
     }
+    console.log('saveRechargeSettings: 保存成功');
     alert('✅ 保存成功！');
     closeSettings();
   } catch(e) {
+    console.error('saveRechargeSettings: 保存失败', e);
+    console.error('saveRechargeSettings: 错误详情:', JSON.stringify(e, null, 2));
     alert('保存失败: ' + e.message);
   }
 }
@@ -864,7 +872,12 @@ function handleChatImageUpload(file) {
 }
 
 async function saveChatSettings() {
+  console.log('saveChatSettings: 开始保存');
+  console.log('saveChatSettings: chatClient是否存在?', !!chatClient);
+  console.log('saveChatSettings: 当前设置类型:', currentSettingsType);
+  
   if (!chatClient) {
+    console.error('saveChatSettings: chatClient未初始化');
     alert('错误: 聊天客户端未初始化');
     return;
   }
@@ -921,6 +934,7 @@ async function saveChatSettings() {
     closeSettings();
   } catch(e) {
     console.error('saveChatSettings: 保存失败', e);
+    console.error('saveChatSettings: 错误详情:', JSON.stringify(e, null, 2));
     alert('保存失败: ' + e.message + '\n\n请检查控制台日志');
   } finally {
     if (saveBtn) {
