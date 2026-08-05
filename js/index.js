@@ -129,6 +129,61 @@ function applySettings() {
         }
         showToast('⚠️ 系统维护中，暂停充值');
     }
+    
+    // 显示微信收款码
+    const wechatQr = settingsCache['wechat_qr'];
+    if (wechatQr) {
+        const qrImg = document.getElementById('qrImage');
+        const qrPlaceholder = document.getElementById('qrPlaceholder');
+        const qrTip = document.getElementById('qrTip');
+        if (qrImg && qrPlaceholder && qrTip) {
+            if (selectedPayMethod === 'wechat') {
+                qrImg.src = wechatQr;
+                qrImg.style.display = 'block';
+                qrPlaceholder.style.display = 'none';
+                qrTip.textContent = '请使用微信扫码付款';
+            }
+        }
+    }
+    
+    // 显示支付宝收款码
+    const alipayQr = settingsCache['alipay_qr'];
+    if (alipayQr) {
+        const qrImg = document.getElementById('qrImage');
+        const qrPlaceholder = document.getElementById('qrPlaceholder');
+        const qrTip = document.getElementById('qrTip');
+        if (qrImg && qrPlaceholder && qrTip) {
+            if (selectedPayMethod === 'alipay') {
+                qrImg.src = alipayQr;
+                qrImg.style.display = 'block';
+                qrPlaceholder.style.display = 'none';
+                qrTip.textContent = '请使用支付宝扫码付款';
+            }
+        }
+    }
+    
+    // 更新代金券配置
+    updateCouponConfig();
+}
+
+// 更新代金券配置
+function updateCouponConfig() {
+    const couponConfig = settingsCache['coupon_config'];
+    if (couponConfig) {
+        try {
+            const configs = JSON.parse(couponConfig);
+            const grid = document.getElementById('amountGrid');
+            if (grid) {
+                grid.innerHTML = configs.map(c => `
+                    <div class="amount-item" data-recharge="${c.value}" data-coupon="${c.coupon}" data-pay="${c.pay}" onclick="selectAmount(this)">
+                        <div class="amount-value">¥${c.value}</div>
+                    </div>
+                `).join('');
+            }
+        } catch(e) {
+            console.error('代金券配置解析失败:', e);
+        }
+    }
 }
 
 // ============ 选择充值金额 ============

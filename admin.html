@@ -770,7 +770,13 @@ async function saveRechargeSettings() {
   } else {
     settings.push({ key: 'logo_url', value: currentSettingsData.logo_url || '' });
   }
-  
+
+  // 处理代金券配置
+  const couponConfig = document.getElementById('setting_coupon_config');
+  if (couponConfig) {
+    settings.push({ key: 'coupon_config', value: couponConfig.value });
+  }
+
   try {
     for (const s of settings) {
       console.log('saveRechargeSettings: 保存设置', s.key, '=', s.value);
