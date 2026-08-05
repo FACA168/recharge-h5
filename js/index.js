@@ -26,9 +26,8 @@ const settingsCache = {};
 // ============ 充值档位配置（金额、优惠券、实付） ============
 // 8.5折：代金券 = 充值金额 - 充值金额*0.85
 const rechargeOptions = [
-    { value: 200, coupon: 30, pay: 170 },
+    { value: 200, coupon: 0, pay: 200, disabled: true },
     { value: 300, coupon: 45, pay: 255 },
-    { value: 400, coupon: 60, pay: 340 },
     { value: 500, coupon: 75, pay: 425 },
     { value: 1000, coupon: 150, pay: 850 },
     { value: 2000, coupon: 300, pay: 1700 }
