@@ -306,18 +306,7 @@
         </div>
 
         <!-- 第四步：结果 -->
-        <div class="card hidden" id="step4">
-            <div style="text-align:center;padding:40px 0;">
-                <div style="font-size:80px;margin-bottom:20px;">✅</div>
-                <h2 style="font-size:24px;font-weight:700;margin-bottom:10px;">充值成功！</h2>
-                <p style="color:#666;margin-bottom:20px;">订单已提交，请耐心等待处理</p>
-                <div style="background:#f8f9fa;padding:16px;border-radius:8px;margin-bottom:20px;">
-                    <p style="font-size:13px;color:#666;margin-bottom:4px;">订单编号</p>
-                    <p id="orderId" style="font-size:16px;font-weight:600;font-family:monospace;">ORD20260805123456</p>
-                </div>
-                <button class="btn btn-primary" onclick="location.reload()">返回首页</button>
-            </div>
-        </div>
+        <!-- 已删除充值成功页面，提交后直接返回首页 -->
 
         <div class="footer">
             © 2026 油卡充值平台 · 安全可信
@@ -396,9 +385,7 @@
             }
             
             // 模拟提交
-            setTimeout(() => {
-                goStep(4);
-            }, 1000);
+            goStep(1); // 直接返回首页
         }
 
         // 初始化
