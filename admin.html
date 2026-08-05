@@ -713,15 +713,20 @@ function renderRechargeSettingsForm() {
       ${wechatUrl.startsWith('data:image') ? `<div class="upload-preview"><img src="${wechatUrl}" id="preview_wechat_qr"><br><button class="remove-btn" onclick="removePreview('wechat_qr')">移除</button></div>` : wechatUrl ? `<div class="upload-preview"><img src="${wechatUrl}" id="preview_wechat_qr"><br><button class="remove-btn" onclick="removePreview('wechat_qr')">移除</button></div>` : ''}
     </div>
     <div class="form-group">
-      <label class="form-label">支付宝收款码</label>
+      <label class="form-label">代金券配置（JSON格式）</label>
+      <textarea class="form-textarea" id="setting_coupon_config" placeholder="[{value:充值金额,coupon:代金券,pay:实付金额}]" rows="4">${data.coupon_config || '[]'}</textarea>
+      <div class="upload-hint">格式示例: [{"value":300,"coupon":45,"pay":255}]</div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Logo图片</label>
       <div class="upload-area">
         <label class="upload-btn">
-          📷 上传图片
-          <input type="file" accept="image/*" style="display:none" onchange="handleImageUpload('alipay_qr', rechargeClient, this.files[0])">
+          📷 选择图片
+          <input type="file" accept="image/*" style="display:none" onchange="handleImageUpload('logo', rechargeClient, this.files[0])">
         </label>
-        <p class="upload-hint">上传收款码图片</p>
+        <p class="upload-hint">建议尺寸: 200x200像素</p>
       </div>
-      ${alipayUrl.startsWith('data:image') ? `<div class="upload-preview"><img src="${alipayUrl}" id="preview_alipay_qr"><br><button class="remove-btn" onclick="removePreview('alipay_qr')">移除</button></div>` : alipayUrl ? `<div class="upload-preview"><img src="${alipayUrl}" id="preview_alipay_qr"><br><button class="remove-btn" onclick="removePreview('alipay_qr')">移除</button></div>` : ''}
+      ${logoUrl.startsWith('data:image') ? `<div class="upload-preview"><img src="${logoUrl}" id="preview_logo"><br><button class="remove-btn" onclick="removePreview('logo')">移除</button></div>` : logoUrl ? `<div class="upload-preview"><img src="${logoUrl}" id="preview_logo"><br><button class="remove-btn" onclick="removePreview('logo')">移除</button></div>` : ''}
     </div>
   `;
 }
@@ -822,13 +827,8 @@ function renderChatSettingsForm() {
   const body = document.getElementById('settingsBody');
   const data = currentSettingsData;
   const logoUrl = tempImageUrls['logo'] || data.logo || '💬';
-  
+
   body.innerHTML = `
-    <div class="form-group">
-      <label class="form-label">代金券配置（JSON格式）</label>
-      <textarea class="form-textarea" id="setting_coupon_config" placeholder="[{value:充值金额,coupon:代金券,pay:实付金额}]" rows="4">${data.coupon_config || '[]'}</textarea>
-      <div class="upload-hint">格式示例: [{"value":300,"coupon":45,"pay":255}]</div>
-    </div>
     <div class="form-group">
       <label class="form-label">Logo图片</label>
       <div class="upload-area">
