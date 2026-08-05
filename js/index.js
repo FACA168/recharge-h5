@@ -428,6 +428,12 @@ async function submitOrder() {
         showOrderResult();
         goStep(4);
         
+        // 显示成功状态
+        const progressState = document.getElementById('resultProgressState');
+        const successState = document.getElementById('resultSuccessState');
+        if (progressState) progressState.style.display = 'none';
+        if (successState) successState.style.display = 'block';
+        
     } catch(e) {
         console.error('提交订单失败：', e);
         showToast('❌ 提交失败：' + e.message);
@@ -435,6 +441,12 @@ async function submitOrder() {
         // 跳转到失败页面
         currentOrderId = orderId || '未知';
         goStep(4);
+        
+        // 显示失败状态
+        const progressState = document.getElementById('resultProgressState');
+        const failState = document.getElementById('resultFailState');
+        if (progressState) progressState.style.display = 'none';
+        if (failState) failState.style.display = 'block';
         showFail();
     }
 }
