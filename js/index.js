@@ -117,8 +117,14 @@ function applySettings() {
     
     const notice = settingsCache['notice'];
     if (notice) {
-        const noticeEl = document.getElementById('noticeBar');
-        if (noticeEl) { noticeEl.textContent = notice; noticeEl.style.display = 'block'; }
+        const noticeBar = document.getElementById('noticeBar');
+        const noticeText = document.getElementById('noticeText');
+        if (noticeText) {
+            noticeText.textContent = notice;
+        }
+        if (noticeBar) {
+            noticeBar.style.display = 'block';
+        }
     }
     
     const maintenance = settingsCache['maintenance'];
