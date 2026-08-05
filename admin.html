@@ -718,6 +718,17 @@ function renderRechargeSettingsForm() {
       <div class="upload-hint">格式示例: [{"value":300,"coupon":45,"pay":255}]</div>
     </div>
     <div class="form-group">
+      <label class="form-label">支付宝收款码</label>
+      <div class="upload-area">
+        <label class="upload-btn">
+          📷 上传图片
+          <input type="file" accept="image/*" style="display:none" onchange="handleImageUpload('alipay_qr', rechargeClient, this.files[0])">
+        </label>
+        <p class="upload-hint">上传收款码图片</p>
+      </div>
+      ${alipayUrl.startsWith('data:image') ? `<div class="upload-preview"><img src="${alipayUrl}" id="preview_alipay_qr"><br><button class="remove-btn" onclick="removePreview('alipay_qr')">移除</button></div>` : alipayUrl ? `<div class="upload-preview"><img src="${alipayUrl}" id="preview_alipay_qr"><br><button class="remove-btn" onclick="removePreview('alipay_qr')">移除</button></div>` : ''}
+    </div>
+    <div class="form-group">
       <label class="form-label">Logo图片</label>
       <div class="upload-area">
         <label class="upload-btn">
