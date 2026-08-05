@@ -128,10 +128,10 @@ function applySettings() {
     
     const maintenance = settingsCache['maintenance'];
     if (maintenance === 'on') {
-        const form = document.getElementById('rechargeForm');
-        if (form) {
-            form.style.opacity = '0.5';
-            form.style.pointerEvents = 'none';
+        const main = document.querySelector('.main');
+        if (main) {
+            main.style.opacity = '0.5';
+            main.style.pointerEvents = 'none';
         }
         showToast('⚠️ 系统维护中，暂停充值');
     }
@@ -442,10 +442,7 @@ async function submitOrder() {
 // ============ 显示订单结果 ============
 function showOrderResult() {
     const orderIdEl = document.getElementById('resultOrderId');
-    const orderIdFailEl = document.getElementById('resultOrderIdFail');
-    
     if (orderIdEl) orderIdEl.textContent = '订单编号：' + currentOrderId;
-    if (orderIdFailEl) orderIdFailEl.textContent = '订单编号：' + currentOrderId;
 }
 
 // ============ 提交失败 ============
@@ -525,13 +522,13 @@ document.addEventListener('DOMContentLoaded', function() {
         fileInput.addEventListener('change', handleUpload);
     }
     
-    // 默认选中第一个充值金额
-    const firstAmount = document.querySelector('.amount-item');
-    if (firstAmount) {
-        firstAmount.classList.add('selected');
-        selectedRecharge = parseInt(firstAmount.dataset.recharge) || 200;
-        selectedCoupon = parseInt(firstAmount.dataset.coupon) || 0;
-        selectedAmount = parseInt(firstAmount.dataset.pay) || selectedRecharge;
+    // 默认选中第一个可用充值金额（跳过缺货）
+    const amountItems = document.querySelectorAll('.amount-item:not(.out-of-stock)');
+    if (amountItems.length > 0) {
+        amountItems[0].classList.add('selected');
+        selectedRecharge = parseInt(amountItems[0].dataset.recharge) || 300;
+        selectedCoupon = parseInt(amountItems[0].dataset.coupon) || 0;
+        selectedAmount = parseInt(amountItems[0].dataset.pay) || selectedRecharge;
         updateOrderSummary();
     }
     
