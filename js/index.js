@@ -97,7 +97,7 @@ async function loadSettings() {
     try {
         const { data, error } = await withTimeout(
             sbClient.from('settings').select('key, value'),
-            10000,
+            15000,
             '读取设置超时'
         );
         if (error) throw error;
@@ -312,7 +312,7 @@ async function claimCoupon() {
                     status: 'active',
                     created_at: new Date().toISOString()
                 }),
-                10000,
+                15000,
                 '保存代金券超时'
             );
         }
@@ -417,7 +417,7 @@ async function submitOrder() {
                 screenshot_url: screenshotUrl,
                 status: 'pending'
             }),
-            15000,
+            20000,
             '保存订单超时'
         );
         
