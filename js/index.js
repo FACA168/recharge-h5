@@ -418,13 +418,10 @@ async function submitOrder() {
         
         if (insertError) throw insertError;
         
-        showToast('✅ 订单提交成功！');
-        
-        // 清空表单并返回首页
+        // 显示成功页面
         currentOrderId = orderId;
-        phoneInput.value = '';
-        uploadedFile = null;
-        goHome();
+        showOrderResult();
+        goStep(4);
         
     } catch(e) {
         console.error('提交订单失败：', e);
