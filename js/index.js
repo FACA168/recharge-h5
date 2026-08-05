@@ -454,7 +454,9 @@ async function submitOrder() {
 // ============ 显示订单结果 ============
 function showOrderResult() {
     const orderIdEl = document.getElementById('resultOrderId');
+    const orderIdProgressEl = document.getElementById('resultOrderIdProgress');
     if (orderIdEl) orderIdEl.textContent = '订单编号：' + currentOrderId;
+    if (orderIdProgressEl) orderIdProgressEl.textContent = '订单编号：' + currentOrderId;
 }
 
 // ============ 提交失败 ============
