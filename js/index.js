@@ -24,13 +24,14 @@ let currentOrderId = '';
 const settingsCache = {};
 
 // ============ 充值档位配置（金额、优惠券、实付） ============
+// 8.5折：代金券 = 充值金额 - 充值金额*0.85
 const rechargeOptions = [
     { value: 200, coupon: 30, pay: 170 },
     { value: 300, coupon: 45, pay: 255 },
     { value: 400, coupon: 60, pay: 340 },
-    { value: 500, coupon: 90, pay: 410 },
-    { value: 1000, coupon: 180, pay: 820 },
-    { value: 2000, coupon: 360, pay: 1640 }
+    { value: 500, coupon: 75, pay: 425 },
+    { value: 1000, coupon: 150, pay: 850 },
+    { value: 2000, coupon: 300, pay: 1700 }
 ];
 
 // ============ 工具函数 ============

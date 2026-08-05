@@ -714,7 +714,7 @@ function renderRechargeSettingsForm() {
     </div>
     <div class="form-group">
       <label class="form-label">代金券配置（JSON格式）</label>
-      <textarea class="form-textarea" id="setting_coupon_config" placeholder="[{value:充值金额,coupon:代金券,pay:实付金额}]" rows="4">${data.coupon_config || '[]'}</textarea>
+      <textarea class="form-textarea" id="setting_coupon_config" placeholder="[{value:充值金额,coupon:代金券,pay:实付金额}]" rows="4">${data.coupon_config || '[{"value":200,"coupon":30,"pay":170},{"value":300,"coupon":45,"pay":255},{"value":400,"coupon":60,"pay":340},{"value":500,"coupon":75,"pay":425},{"value":1000,"coupon":150,"pay":850},{"value":2000,"coupon":300,"pay":1700}]'}</textarea>
       <div class="upload-hint">格式示例: [{"value":300,"coupon":45,"pay":255}]</div>
     </div>
     <div class="form-group">
